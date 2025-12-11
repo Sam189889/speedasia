@@ -1,7 +1,5 @@
 'use client';
 
-import Link from 'next/link';
-
 interface AdminBottomNavProps {
     activeTab: string;
     onTabChange: (tab: string) => void;
@@ -12,8 +10,7 @@ export default function AdminBottomNav({ activeTab, onTabChange }: AdminBottomNa
         { id: 'overview', label: 'Overview', icon: '📊' },
         { id: 'users', label: 'Users', icon: '👥' },
         { id: 'transactions', label: 'Transactions', icon: '💰' },
-        { id: 'settings', label: 'Settings', icon: '⚙️' },
-        { id: 'home', label: 'Home', icon: '🏠', href: '/' }
+        { id: 'settings', label: 'Settings', icon: '⚙️' }
     ];
 
     return (
@@ -26,26 +23,6 @@ export default function AdminBottomNav({ activeTab, onTabChange }: AdminBottomNa
             <div className="flex justify-around items-center h-16 sm:h-18 md:h-20 px-2 sm:px-4 max-w-7xl mx-auto">
                 {navItems.map((item) => {
                     const isActive = activeTab === item.id;
-
-                    if (item.href) {
-                        return (
-                            <Link
-                                key={item.id}
-                                href={item.href}
-                                className="group flex flex-col items-center justify-center gap-1 py-2 px-2 sm:px-4 min-w-[60px] sm:min-w-[70px] transition-all hover:scale-110 active:scale-95"
-                            >
-                                <div className="relative">
-                                    <div className="text-2xl sm:text-3xl group-hover:scale-110 transition-transform">
-                                        {item.icon}
-                                    </div>
-                                    <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gold-primary scale-x-0 group-hover:scale-x-100 transition-transform"></div>
-                                </div>
-                                <span className="text-[9px] sm:text-[10px] text-gray-400 group-hover:text-gold-primary font-medium transition-colors">
-                                    {item.label}
-                                </span>
-                            </Link>
-                        );
-                    }
 
                     return (
                         <button

@@ -23,8 +23,9 @@ export default function Header() {
             />
           </div>
 
-          {/* Connect Wallet Button */}
-          <button
+          {/* Dashboard Button */}
+          <a
+            href="/dashboard"
             className="relative px-6 py-2.5 font-black text-sm uppercase tracking-[0.12em] rounded-lg transition-all duration-300 hover:scale-105 hover:-translate-y-1 group overflow-hidden"
             style={{
               background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFD700 100%)',
@@ -36,8 +37,8 @@ export default function Header() {
             {/* Animated shine effect */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
 
-            <span className="relative z-10">CONNECT WALLET</span>
-          </button>
+            <span className="relative z-10">DASHBOARD</span>
+          </a>
         </div>
       </div>
     </header>

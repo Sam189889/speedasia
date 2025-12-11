@@ -80,20 +80,6 @@ export default function BottomNav() {
           </div>
           <span className="text-[9px] sm:text-[10px] text-gray-400 group-hover:text-gold-primary font-medium transition-colors">Calc</span>
         </a>
-
-        {/* Dashboard */}
-        <a
-          href="/dashboard"
-          className="group flex flex-col items-center justify-center gap-1 py-2 px-2 sm:px-4 min-w-[60px] sm:min-w-[70px] transition-all hover:scale-110 active:scale-95"
-        >
-          <div className="relative">
-            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400 group-hover:text-gold-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 12a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1v-7z" />
-            </svg>
-            <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gold-primary scale-x-0 group-hover:scale-x-100 transition-transform"></div>
-          </div>
-          <span className="text-[9px] sm:text-[10px] text-gray-400 group-hover:text-gold-primary font-medium transition-colors">Dashboard</span>
-        </a>
       </div>
     </nav>
   );
