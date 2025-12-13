@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import logo from '@/app/src/logo.png';
 
 interface AdminHeaderProps {
     adminName: string;
@@ -20,7 +19,7 @@ export default function AdminHeader({ adminName, onLogout }: AdminHeaderProps) {
                 {/* Logo */}
                 <Link href="/" className="flex items-center gap-3">
                     <Image
-                        src={logo}
+                        src="/logo.png"
                         alt="Speed Asia Logo"
                         width={240}
                         height={80}
