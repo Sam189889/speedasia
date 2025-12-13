@@ -1,5 +1,4 @@
 import Image from 'next/image';
-import logo from '@/app/src/logo.png';
 
 export default function Header() {
   return (
@@ -13,13 +12,13 @@ export default function Header() {
           {/* Logo */}
           <div className="flex items-center gap-3">
             <Image
-              src={logo}
+              src="/logo.png"
               alt="Speed Asia Logo"
               width={240}
               height={80}
               className="h-16 w-auto"
               priority
-              quality={100}
+              unoptimized
             />
           </div>
 
