@@ -6,8 +6,6 @@ import Link from 'next/link';
 
 // Hooks
 import { useUserValidation } from '@/hooks/user/useUserValidation';
-import { useUserDashboard } from '@/hooks/user/useUserDashboard';
-import { encodeUserId, decodeUserId, formatUSDT } from '@/hooks/common/formatters';
 
 // Components
 import DashboardHeader from './components/DashboardHeader';
@@ -15,9 +13,7 @@ import DashboardBottomNav from './components/DashboardBottomNav';
 import OverviewTab from './components/OverviewTab';
 import StakeTab from './components/StakeTab';
 import EarningsTab from './components/EarningsTab';
-import ProfileTab from './components/ProfileTab';
-import QuickActions from './components/QuickActions';
-import ReferralSection from './components/ReferralSection';
+import TeamTab from './components/TeamTab';
 import WalletConnect from '@/app/walletConnect/WalletConnect';
 
 export default function DashboardPage() {
@@ -34,12 +30,6 @@ export default function DashboardPage() {
         displayUserId,
         userId
     } = useUserValidation(userAddress);
-
-    // User Dashboard Data
-    const {
-        dashboard,
-        isLoading: loadingDashboard
-    } = useUserDashboard(userId);
 
     // Show connect wallet message if not connected
     if (!userAddress) {
@@ -77,8 +67,8 @@ export default function DashboardPage() {
         );
     }
 
-    // Show loading state
-    if (checkingRegistration || loadingDashboard) {
+    // Show loading state while checking registration
+    if (checkingRegistration) {
         return (
             <div className="min-h-screen bg-black text-white pb-20 relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-b from-black via-bg-gold-dark to-black"></div>
@@ -89,8 +79,8 @@ export default function DashboardPage() {
                 <div className="min-h-screen flex items-center justify-center pt-20 relative z-10">
                     <div className="text-center">
                         <div className="w-16 h-16 border-4 border-gold-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                        <p className="text-white text-xl font-bold">Loading Dashboard...</p>
-                        <p className="text-gray-400 text-sm mt-2">Fetching your data from blockchain...</p>
+                        <p className="text-white text-xl font-bold">Checking Registration...</p>
+                        <p className="text-gray-400 text-sm mt-2">Verifying your wallet on blockchain...</p>
                     </div>
                 </div>
             </div>
@@ -145,89 +135,24 @@ export default function DashboardPage() {
         );
     }
 
-    // Prepare user data from dashboard
-    const userData = {
-        walletAddress: userAddress,
-        userId: displayUserId || '',
-        totalStaked: dashboard?.stakingStats?.totalStaked ? formatUSDT(dashboard.stakingStats.totalStaked) : '0',
-        activeStaked: dashboard?.stakingStats?.activeStakedAmount ? formatUSDT(dashboard.stakingStats.activeStakedAmount) : '0',
-        activeStakesCount: dashboard?.stakingStats?.activeStakesCount ? Number(dashboard.stakingStats.activeStakesCount) : 0,
-        totalEarnings: dashboard?.incomes?.totalIncome ? formatUSDT(dashboard.incomes.totalIncome) : '0',
-        availableBalance: dashboard?.incomes?.availableBalance ? formatUSDT(dashboard.incomes.availableBalance) : '0',
-        directIncome: dashboard?.incomes?.directIncome ? formatUSDT(dashboard.incomes.directIncome) : '0',
-        levelIncome: dashboard?.incomes?.levelIncome ? formatUSDT(dashboard.incomes.levelIncome) : '0',
-        stakingIncome: dashboard?.incomes?.stakingIncome ? formatUSDT(dashboard.incomes.stakingIncome) : '0',
-        lifetimeRewards: dashboard?.incomes?.lifetimeRewardIncome ? formatUSDT(dashboard.incomes.lifetimeRewardIncome) : '0',
-        referrals: dashboard?.team?.directReferralCount ? Number(dashboard.team.directReferralCount) : 0,
-        teamSize: dashboard?.team?.teamSize ? Number(dashboard.team.teamSize) : 0,
-        unlockedLevels: dashboard?.unlockedLevels ? Number(dashboard.unlockedLevels) : 0,
-    };
-
-    const stats = [
-        { label: 'Total Staked', value: `$${userData.totalStaked}`, icon: '💰' },
-        { label: 'Total Earnings', value: `$${userData.totalEarnings}`, icon: '📈' },
-        { label: 'Direct Referrals', value: userData.referrals, icon: '👥' },
-        { label: 'Unlocked Levels', value: userData.unlockedLevels, icon: '⭐' }
-    ];
-
-    // Transform stakes data
-    const activeStakes = dashboard?.stakes?.filter(s => s.isActive).map(stake => {
-        const daysTotal = Number(stake.duration) / 86400;
-        const daysLeft = Math.max(0, Math.ceil((Number(stake.endTime) - Date.now() / 1000) / 86400));
-        const progress = Math.min(100, Math.floor(((Date.now() / 1000) - Number(stake.startTime)) / (Number(stake.endTime) - Number(stake.startTime)) * 100));
-
-        return {
-            amount: `$${formatUSDT(stake.amount)}`,
-            plan: `${daysTotal} Days`,
-            interest: `${Number(stake.interestRate) / 100}%`,
-            daysLeft: daysLeft,
-            progress: progress
-        };
-    }) || [];
-
     // Handlers
     const handleCreateStake = () => setActiveTab('stake');
-    const handleWithdraw = () => setActiveTab('earnings');
-    const handleInvite = () => console.log('Inviting friends...');
-    const handleCalculator = () => console.log('Opening calculator...');
-
-    const handleCopyLink = () => {
-        navigator.clipboard.writeText(`speedasia.io/register?r=${userData.userId}`);
-        alert('Referral link copied!');
-    };
 
     const renderTabContent = () => {
         switch (activeTab) {
             case 'overview':
                 return (
-                    <div className="grid lg:grid-cols-3 gap-6">
-                        <div className="lg:col-span-2">
-                            <OverviewTab
-                                stats={stats}
-                                activeStakes={activeStakes}
-                                recentTransactions={[]}
-                                onCreateStake={handleCreateStake}
-                            />
-                        </div>
-                        <div className="space-y-6">
-                            <QuickActions
-                                onWithdraw={handleWithdraw}
-                                onInvite={handleInvite}
-                                onCalculator={handleCalculator}
-                            />
-                            <ReferralSection
-                                referralLink={`speedasia.io/register?r=${userData.userId}`}
-                                onCopyLink={handleCopyLink}
-                            />
-                        </div>
-                    </div>
+                    <OverviewTab
+                        userId={userId}
+                        onCreateStake={handleCreateStake}
+                    />
                 );
             case 'stake':
-                return <StakeTab />;
+                return <StakeTab userId={userId} />;
             case 'earnings':
-                return <EarningsTab />;
-            case 'profile':
-                return <ProfileTab />;
+                return <EarningsTab userId={userId} />;
+            case 'team':
+                return <TeamTab userId={userId} />;
             default:
                 return null;
         }
@@ -252,13 +177,9 @@ export default function DashboardPage() {
                             backgroundClip: 'text',
                             color: 'transparent'
                         }}>
-                            Welcome Back, {userData.userId}! 👋
+                            Welcome Back, {displayUserId}! 👋
                         </h1>
                         <p className="text-gray-400">Here's your staking overview</p>
-                        <div className="mt-2 flex items-center gap-4 text-sm">
-                            <span className="text-gray-500">Available Balance:</span>
-                            <span className="text-gold-primary font-bold">${userData.availableBalance} USDT</span>
-                        </div>
                     </div>
                 )}
 

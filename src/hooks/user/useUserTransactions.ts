@@ -1,7 +1,7 @@
 "use client";
 import { prepareContractCall } from "thirdweb";
 import { useSendTransaction } from "thirdweb/react";
-import { useSpeed } from "@/hooks/contracts/useSpeed";
+import { useInterface } from "@/hooks/contracts/useInterface";
 import { useCallback } from "react";
 
 /**
@@ -9,7 +9,7 @@ import { useCallback } from "react";
  * Includes: register, stake, claimStake, claimLifetimeReward, withdraw
  */
 export function useUserTransactions() {
-  const contract = useSpeed();
+  const contract = useInterface();
   const { mutateAsync: sendTransaction, isPending, error } = useSendTransaction();
 
   /**
@@ -25,7 +25,7 @@ export function useUserTransactions() {
   ) => {
     const transaction = prepareContractCall({
       contract,
-      method: "function register(bytes5 _referrerId, uint256 _amount, uint256 _duration)",
+      method:"function register(bytes5 _referrerId, uint256 _amount, uint256 _duration)",
       params: [referrerId, amount, duration],
     });
     return sendTransaction(transaction);
