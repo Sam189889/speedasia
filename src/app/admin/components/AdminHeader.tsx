@@ -10,7 +10,7 @@ interface AdminHeaderProps {
 
 export default function AdminHeader({ adminName, onLogout }: AdminHeaderProps) {
     return (
-        <header className="sticky top-0 z-50 border-b-2 border-gold-primary/20" style={{
+        <header className="sticky top-0 z-50 border-b-2 border-gold-primary/20 mb-4" style={{
             background: 'linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(26,21,8,0.95) 100%)',
             backdropFilter: 'blur(10px)',
             boxShadow: '0 4px 30px rgba(255, 215, 0, 0.2)'

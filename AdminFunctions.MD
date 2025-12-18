@@ -108,3 +108,19 @@ const transaction = prepareContractCall({
     params: [_amount],
 });
 sendTransaction(transaction);
+
+
+## Get firstUser
+const { data, isPending } = useReadContract({
+    contract,
+    method: "function firstUser() view returns (address)",
+    params: [],
+});
+
+## transferFirstUser
+const transaction = prepareContractCall({
+    contract,
+    method: "function transferFirstUser(address _newFirstUser)",
+    params: [_newFirstUser],
+});
+sendTransaction(transaction);
