@@ -9,7 +9,6 @@ export default function AdminBottomNav({ activeTab, onTabChange }: AdminBottomNa
     const navItems = [
         { id: 'overview', label: 'Overview', icon: '📊' },
         { id: 'users', label: 'Users', icon: '👥' },
-        { id: 'transactions', label: 'Transactions', icon: '💰' },
         { id: 'settings', label: 'Settings', icon: '⚙️' }
     ];
 

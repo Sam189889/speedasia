@@ -62,11 +62,11 @@ export default function LevelCard({
                             </span>
                         )}
                     </div>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${isUnlocked
-                        ? 'bg-green-500/20 text-green-400'
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded flex items-center gap-0.5 ${isUnlocked
+                        ? 'bg-gold-primary/20 text-gold-primary'
                         : 'bg-gray-700/50 text-gray-500'
                         }`}>
-                        {isUnlocked ? '✓' : '🔒'}
+                        {isUnlocked ? `⭐${levelIndex + 1}` : '🔒'}
                     </span>
                 </div>
 

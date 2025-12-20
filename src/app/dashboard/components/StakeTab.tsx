@@ -362,7 +362,7 @@ export default function StakeTab({ userId }: StakeTabProps) {
                         </span>
                     </div>
                     <div className="flex justify-between items-center mt-1">
-                        <span className="text-gray-300 text-sm">Guaranteed Return:</span>
+                        <span className="text-gray-300 text-sm">Assured Return:</span>
                         <span className="text-green-400 font-bold">
                             +${(Number(formatUSDT(stakeAmountWei)) * (selectedDurationInfo?.interest || 0) / 100).toFixed(2)} USDT
                             <span className="text-xs text-gray-400 ml-1">({selectedDurationInfo?.interest}% in {selectedDurationInfo?.days}d)</span>

@@ -525,9 +525,10 @@ export default function SettingsTab() {
             </div>
 
             {/* Partners Management */}
-            <div className={`card-gold p-6 border-4 ${editMode === 'partners' ? 'border-blue-500/60' : 'border-gold-primary/40'} transition-all`}>
+            <div className={`card-gold p-6 border-4 border-gold-primary/40 transition-all`}>
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-black text-gold-primary uppercase">👥 Partners</h2>
+                    {/* Edit button hidden for now
                     {editMode === 'partners' ? (
                         <div className="flex gap-2">
                             <button
@@ -554,6 +555,7 @@ export default function SettingsTab() {
                             ✏️ Edit
                         </button>
                     )}
+                    */}
                 </div>
 
                 {editMode === 'partners' ? (

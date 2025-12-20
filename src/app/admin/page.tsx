@@ -6,7 +6,6 @@ import AdminHeader from './components/AdminHeader';
 import AdminBottomNav from './components/AdminBottomNav';
 import OverviewTab from './components/OverviewTab';
 import UsersTab from './components/UsersTab';
-import TransactionsTab from './components/TransactionsTab';
 import SettingsTab from './components/SettingsTab';
 import WalletConnect from '@/app/walletConnect/WalletConnect';
 import { ADMIN_ADDRESS } from '@/constants/addresses';
@@ -32,8 +31,6 @@ export default function AdminPage() {
                 return <OverviewTab />;
             case 'users':
                 return <UsersTab />;
-            case 'transactions':
-                return <TransactionsTab />;
             case 'settings':
                 return <SettingsTab />;
             default:
@@ -117,10 +114,7 @@ export default function AdminPage() {
     // Admin Dashboard
     return (
         <div className="min-h-screen bg-black text-white pb-20">
-            <AdminHeader
-                adminName="Admin"
-                onLogout={handleLogout}
-            />
+            <AdminHeader />
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Welcome Section - Only show on overview */}

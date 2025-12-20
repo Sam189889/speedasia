@@ -103,8 +103,17 @@ export default function TeamTab({ userId }: TeamTabProps) {
             <div className="card-gold p-4 sm:p-6 border-4 border-gold-primary/40">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-6">
                     <h3 className="text-lg sm:text-xl font-black text-gold-primary uppercase">Level Details</h3>
-                    <div className="px-3 py-1.5 sm:px-4 sm:py-2 bg-gold-primary/10 rounded-full border border-gold-primary/30">
-                        <span className="text-gold-primary font-bold text-sm">{Number(unlockedLevels)} / 20 Unlocked</span>
+                    <div className="flex items-center gap-3">
+                        {/* Current Rank Badge */}
+                        <div className="px-3 py-1.5 sm:px-4 sm:py-2 bg-yellow-500/20 rounded-full border border-yellow-500/40">
+                            <span className="text-yellow-400 font-bold text-sm">
+                                Rank ⭐ {Number(unlockedLevels)}
+                            </span>
+                        </div>
+                        {/* Unlocked Count */}
+                        <div className="px-3 py-1.5 sm:px-4 sm:py-2 bg-gold-primary/10 rounded-full border border-gold-primary/30">
+                            <span className="text-gold-primary font-bold text-sm">{Number(unlockedLevels)} / 20 Unlocked</span>
+                        </div>
                     </div>
                 </div>
 
