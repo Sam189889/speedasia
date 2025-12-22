@@ -93,7 +93,8 @@ export default function OverviewTab({ userId, onCreateStake }: OverviewTabProps)
             plan: `${daysTotal} Days`,
             interest: `${Number(stake.interestRate) / 100}%`,
             daysLeft: daysLeft,
-            progress: progress
+            progress: progress,
+            endTime: endTime // Add endTime for countdown timer
         };
     }) || [];
 

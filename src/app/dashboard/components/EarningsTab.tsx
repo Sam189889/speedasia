@@ -246,8 +246,8 @@ export default function EarningsTab({ userId }: EarningsTabProps) {
                         <div className="text-[10px] text-gray-400 uppercase">Team Size</div>
                     </div>
                     <div className="text-center border-x border-white/10">
-                        <div className="text-lg font-black text-green-400">{Number(team.directReferralCount)}</div>
-                        <div className="text-[10px] text-gray-400 uppercase">Directs</div>
+                        <div className="text-lg font-black text-green-400">{Number(team.qualifyingDirectCount)}</div>
+                        <div className="text-[10px] text-gray-400 uppercase">Directs ($20+)</div>
                     </div>
                     <div className="text-center">
                         <div className="text-lg font-black text-blue-400">${formatUSDT(team.teamBusinessVolume, 0)}</div>
@@ -264,9 +264,9 @@ export default function EarningsTab({ userId }: EarningsTabProps) {
                         const directReq = Number(directsRequired[index] || 0);
                         const businessReq = businessRequired[index] || BigInt(0);
 
-                        // Calculate progress
+                        // Calculate progress - using qualifyingDirectCount for $20+ referrals
                         const teamProgress = Math.min(100, (Number(team.teamSize) / teamReq) * 100 || 0);
-                        const directProgress = Math.min(100, (Number(team.directReferralCount) / directReq) * 100 || 0);
+                        const directProgress = Math.min(100, (Number(team.qualifyingDirectCount) / directReq) * 100 || 0);
                         const businessProgress = Math.min(100, (Number(team.teamBusinessVolume) / Number(businessReq)) * 100 || 0);
                         const overallProgress = Math.min(100, (teamProgress + directProgress + businessProgress) / 3);
 
@@ -274,10 +274,10 @@ export default function EarningsTab({ userId }: EarningsTabProps) {
                             <div
                                 key={index}
                                 className={`p-4 rounded-lg border-2 transition-all ${claimed
-                                        ? 'bg-green-500/10 border-green-500/30'
-                                        : eligible
-                                            ? 'bg-gold-primary/10 border-gold-primary animate-pulse'
-                                            : 'bg-black/50 border-white/10'
+                                    ? 'bg-green-500/10 border-green-500/30'
+                                    : eligible
+                                        ? 'bg-gold-primary/10 border-gold-primary animate-pulse'
+                                        : 'bg-black/50 border-white/10'
                                     }`}
                             >
                                 {/* Header */}
@@ -320,11 +320,11 @@ export default function EarningsTab({ userId }: EarningsTabProps) {
                                             <div className="h-full bg-blue-500 transition-all" style={{ width: `${teamProgress}%` }}></div>
                                         </div>
 
-                                        {/* Directs */}
+                                        {/* Directs ($20+) */}
                                         <div className="flex items-center justify-between text-xs">
-                                            <span className="text-gray-400">Direct Referrals</span>
-                                            <span className={Number(team.directReferralCount) >= directReq ? 'text-green-400' : 'text-gray-500'}>
-                                                {Number(team.directReferralCount)} / {directReq}
+                                            <span className="text-gray-400">Direct Referrals ($20+)</span>
+                                            <span className={Number(team.qualifyingDirectCount) >= directReq ? 'text-green-400' : 'text-gray-500'}>
+                                                {Number(team.qualifyingDirectCount)} / {directReq}
                                             </span>
                                         </div>
                                         <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">

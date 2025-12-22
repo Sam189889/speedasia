@@ -28,37 +28,6 @@ export default function DashboardBottomNav({ activeTab, onTabChange }: Dashboard
                 {navItems.map((item) => {
                     const isActive = activeTab === item.id;
 
-                    // Stake button - center with highlight
-                    if (item.id === 'stake') {
-                        return (
-                            <button
-                                key={item.id}
-                                onClick={() => handleClick(item)}
-                                className="group flex flex-col items-center justify-center gap-1 py-2 px-2 sm:px-4 min-w-[60px] sm:min-w-[70px] transition-all active:scale-95 -mt-4 sm:-mt-6"
-                            >
-                                <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center relative group-hover:scale-110 transition-transform" style={{
-                                    background: isActive
-                                        ? 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)'
-                                        : 'linear-gradient(135deg, rgba(255, 215, 0, 0.3) 0%, rgba(255, 165, 0, 0.3) 100%)',
-                                    boxShadow: isActive
-                                        ? '0 4px 25px rgba(255, 215, 0, 0.5), 0 0 40px rgba(255, 215, 0, 0.3)'
-                                        : '0 4px 15px rgba(255, 215, 0, 0.2)'
-                                }}>
-                                    <span className={`text-2xl sm:text-3xl ${isActive ? 'text-black' : 'text-gold-primary'}`}>
-                                        {item.icon}
-                                    </span>
-                                    {isActive && (
-                                        <div className="absolute inset-0 rounded-full bg-gold-primary animate-ping opacity-20"></div>
-                                    )}
-                                </div>
-                                <span className={`text-[9px] sm:text-[10px] font-bold ${isActive ? 'text-gold-primary' : 'text-gray-400'}`}>
-                                    {item.label}
-                                </span>
-                            </button>
-                        );
-                    }
-
-                    // Regular nav items
                     return (
                         <button
                             key={item.id}

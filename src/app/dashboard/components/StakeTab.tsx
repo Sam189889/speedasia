@@ -266,6 +266,17 @@ export default function StakeTab({ userId }: StakeTabProps) {
                             setTier3Amount(newAmount.toString());
                         };
 
+                        // Validate on blur - clamp value to valid range
+                        const handleBlur = () => {
+                            if (!tier3Amount) {
+                                setTier3Amount(effectiveMin.toString());
+                                return;
+                            }
+                            const numVal = parseInt(tier3Amount) || effectiveMin;
+                            const clampedVal = Math.min(maxAmount, Math.max(effectiveMin, numVal));
+                            setTier3Amount(clampedVal.toString());
+                        };
+
                         return (
                             <div className="mt-4 p-4 bg-black/30 rounded-xl border border-gold-primary/20">
                                 <div className="flex items-center justify-center gap-4 mb-4">
@@ -283,10 +294,10 @@ export default function StakeTab({ userId }: StakeTabProps) {
                                             type="number"
                                             value={tier3Amount || effectiveMin}
                                             onChange={(e) => {
-                                                const val = e.target.value.replace(/[^0-9]/g, '');
-                                                const numVal = parseInt(val) || effectiveMin;
-                                                setTier3Amount(Math.min(maxAmount, Math.max(effectiveMin, numVal)).toString());
+                                                // Allow free typing
+                                                setTier3Amount(e.target.value);
                                             }}
+                                            onBlur={handleBlur}
                                             className="w-32 h-16 text-3xl font-black text-center bg-black/50 border-2 border-gold-primary/40 focus:border-gold-primary rounded-xl text-gold-primary outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                         />
                                         <p className="text-xs text-gray-400 mt-2">
@@ -364,7 +375,7 @@ export default function StakeTab({ userId }: StakeTabProps) {
                     <div className="flex justify-between items-center mt-1">
                         <span className="text-gray-300 text-sm">Assured Return:</span>
                         <span className="text-green-400 font-bold">
-                            +${(Number(formatUSDT(stakeAmountWei)) * (selectedDurationInfo?.interest || 0) / 100).toFixed(2)} USDT
+                            +${(Number(formatUSDT(stakeAmountWei).replace(/,/g, '')) * (selectedDurationInfo?.interest || 0) / 100).toFixed(2)} USDT
                             <span className="text-xs text-gray-400 ml-1">({selectedDurationInfo?.interest}% in {selectedDurationInfo?.days}d)</span>
                         </span>
                     </div>

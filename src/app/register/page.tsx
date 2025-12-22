@@ -425,6 +425,17 @@ const RegisterContent: React.FC = () => {
                                     setTier3Amount(newAmount.toString());
                                 };
 
+                                // Validate on blur - clamp value to valid range
+                                const handleBlur = () => {
+                                    if (!tier3Amount) {
+                                        setTier3Amount(minAmount.toString());
+                                        return;
+                                    }
+                                    const numVal = parseInt(tier3Amount) || minAmount;
+                                    const clampedVal = Math.min(maxAmount, Math.max(minAmount, numVal));
+                                    setTier3Amount(clampedVal.toString());
+                                };
+
                                 return (
                                     <div className="mt-4 p-4 bg-black/30 rounded-xl border border-gold-primary/20">
                                         {/* +/- Controls with Amount Display */}
@@ -439,16 +450,16 @@ const RegisterContent: React.FC = () => {
                                                 −
                                             </button>
 
-                                            {/* Amount Display with Manual Input */}
+                                            {/* Amount Display with Manual Input - Free typing, validate on blur */}
                                             <div className="flex-1 text-center">
                                                 <input
                                                     type="number"
                                                     value={tier3Amount || minAmount}
                                                     onChange={(e) => {
-                                                        const val = e.target.value.replace(/[^0-9]/g, '');
-                                                        const numVal = parseInt(val) || minAmount;
-                                                        setTier3Amount(Math.min(maxAmount, Math.max(minAmount, numVal)).toString());
+                                                        // Allow free typing - just set the value
+                                                        setTier3Amount(e.target.value);
                                                     }}
+                                                    onBlur={handleBlur}
                                                     className="w-32 h-16 text-3xl font-black text-center bg-black/50 border-2 border-gold-primary/40 focus:border-gold-primary rounded-xl text-gold-primary outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                 />
                                                 <p className="text-xs text-gray-400 mt-2">
@@ -489,12 +500,6 @@ const RegisterContent: React.FC = () => {
                                                 );
                                             })}
                                         </div>
-
-                                        {tier3Amount && !validateTier3Amount() && (
-                                            <p className="text-red-400 text-sm mt-3 text-center">
-                                                ⚠️ Amount must be between ${tierAmounts.tier3Min} and ${tierAmounts.max}
-                                            </p>
-                                        )}
                                     </div>
                                 );
                             })()}
@@ -533,7 +538,7 @@ const RegisterContent: React.FC = () => {
                             <div className="flex justify-between items-center mt-1">
                                 <span className="text-gray-300 text-sm">Assured Return:</span>
                                 <span className="text-green-400 font-bold">
-                                    +${(Number(formatUSDT(stakeAmountWei)) * (selectedDurationInfo?.interest || 0) / 100).toFixed(2)} USDT
+                                    +${(Number(formatUSDT(stakeAmountWei).replace(/,/g, '')) * (selectedDurationInfo?.interest || 0) / 100).toFixed(2)} USDT
                                     <span className="text-xs text-gray-400 ml-1">({selectedDurationInfo?.interest}% in {selectedDurationInfo?.days}d)</span>
                                 </span>
                             </div>
