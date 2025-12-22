@@ -79,8 +79,8 @@ export default function OverviewTab({ userId, onCreateStake }: OverviewTabProps)
         }
     ];
 
-    // Transform stakes data
-    const activeStakes = dashboard.stakes?.filter(s => s.isActive).map(stake => {
+    // Transform stakes data - include all fields needed for claim & restake
+    const activeStakes = dashboard.stakes?.filter(s => s.isActive).map((stake, index) => {
         const daysTotal = Number(stake.duration) / 86400;
         const now = Date.now() / 1000;
         const startTime = Number(stake.startTime);
@@ -89,14 +89,23 @@ export default function OverviewTab({ userId, onCreateStake }: OverviewTabProps)
         const progress = Math.min(100, Math.max(0, Math.floor(((now - startTime) / (endTime - startTime)) * 100)));
 
         return {
-            amount: `$${formatUSDT(stake.amount)}`,
+            stakeIndex: index,
+            amount: stake.amount,
+            interest: stake.interestRate,
+            endTime: endTime,
+            isActive: stake.isActive,
+            isClaimed: stake.isClaimed,
             plan: `${daysTotal} Days`,
-            interest: `${Number(stake.interestRate) / 100}%`,
-            daysLeft: daysLeft,
+            interestRate: Number(stake.interestRate) / 100,
             progress: progress,
-            endTime: endTime // Add endTime for countdown timer
+            daysLeft: daysLeft
         };
     }) || [];
+
+    // Refetch function for after claim
+    const handleRefresh = () => {
+        // This will trigger a re-render when dashboard data updates
+    };
 
     // Decode userId for referral link
     const userIdString = userId ? decodeUserId(userId) : '';
@@ -147,7 +156,7 @@ export default function OverviewTab({ userId, onCreateStake }: OverviewTabProps)
                     </div>
 
                     {/* Active Stakes */}
-                    <ActiveStakes stakes={activeStakes} onCreateStake={onCreateStake} />
+                    <ActiveStakes stakes={activeStakes} userId={userId} onCreateStake={onCreateStake} onRefresh={handleRefresh} />
                 </div>
 
                 {/* Right Column - Income & Referral */}

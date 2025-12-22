@@ -1,19 +1,31 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
+import { useUserTransactions } from '@/hooks/user/useUserTransactions';
+import { useUserBalances } from '@/hooks/user/useUserBalances';
+import { useTokenApproval } from '@/hooks/user/useTokenApproval';
+import { useContractConfig } from '@/hooks/common/useContractData';
+import { formatUSDT, usdtToWei } from '@/hooks/common/formatters';
 
-interface ActiveStake {
-    amount: string;
+interface StakeData {
+    stakeIndex: number;
+    amount: bigint;
+    interest: bigint;
+    endTime: number;
+    isActive: boolean;
+    isClaimed: boolean;
     plan: string;
-    interest: string;
-    daysLeft: number;
+    interestRate: number;
     progress: number;
-    endTime?: number; // Unix timestamp in seconds
+    daysLeft: number;
 }
 
 interface ActiveStakesProps {
-    stakes: ActiveStake[];
+    stakes: StakeData[];
+    userId: `0x${string}` | undefined;
     onCreateStake: () => void;
+    onRefresh: () => void;
 }
 
 // Countdown Timer Component
@@ -73,48 +85,342 @@ function CountdownTimer({ endTime }: { endTime: number }) {
     );
 }
 
-export default function ActiveStakes({ stakes, onCreateStake }: ActiveStakesProps) {
+// Claim & Restake Modal
+function ClaimRestakeModal({
+    stake,
+    userId,
+    onClose,
+    onSuccess
+}: {
+    stake: StakeData;
+    userId: `0x${string}`;
+    onClose: () => void;
+    onSuccess: () => void;
+}) {
+    const [restakeAmount, setRestakeAmount] = useState('');
+    const [additionalAmount, setAdditionalAmount] = useState('');
+    const [selectedDuration, setSelectedDuration] = useState(1);
+
+    const { claimStake, claimAndRestake, isPending } = useUserTransactions();
+    const { hasEnoughGas, hasEnoughUsdt, getUsdtBalanceDisplay, getNativeBalanceDisplay } = useUserBalances();
+    const { needsApproval, approveTokens, isApproving } = useTokenApproval();
+    const { durations } = useContractConfig();
+
+    // Calculate total payout (principal + interest)
+    const principal = stake.amount;
+    const interestAmount = (principal * stake.interest) / BigInt(10000);
+    const totalPayout = principal + interestAmount;
+    const totalPayoutNum = Number(formatUSDT(totalPayout).replace(/,/g, ''));
+
+    // Get duration options
+    const durationOptions = durations?.map((d, index) => ({
+        id: index + 1,
+        days: Number(d.days) / 86400,
+        interest: Number(d.interest) / 100,
+        daysRaw: d.days,
+    })) || [];
+
+    const selectedDurationInfo = durationOptions.find(d => d.id === selectedDuration) || durationOptions[0];
+
+    // Calculate amounts
+    const restakeAmountNum = Number(restakeAmount) || 0;
+    const additionalAmountNum = Number(additionalAmount) || 0;
+    const newStakeTotal = restakeAmountNum + additionalAmountNum;
+    const toBalance = totalPayoutNum - restakeAmountNum;
+
+    // Validation
+    const isRestakeValid = restakeAmountNum <= totalPayoutNum && restakeAmountNum >= 0;
+    const additionalWei = additionalAmountNum > 0 ? usdtToWei(additionalAmount) : BigInt(0);
+    const hasBalance = additionalAmountNum === 0 || hasEnoughUsdt(additionalWei);
+
+    // Handle Just Claim
+    const handleJustClaim = async () => {
+        if (!hasEnoughGas()) {
+            toast.error('Insufficient BNB for gas fees!');
+            return;
+        }
+
+        try {
+            toast.loading('Claiming stake...', { id: 'claim' });
+            await claimStake(userId, BigInt(stake.stakeIndex));
+            toast.success('Stake claimed successfully! 🎉', { id: 'claim' });
+            onSuccess();
+        } catch (error) {
+            console.error('Claim error:', error);
+            toast.error('Claim failed. Please try again.', { id: 'claim' });
+        }
+    };
+
+    // Handle Claim & Restake
+    const handleClaimAndRestake = async () => {
+        if (!hasEnoughGas()) {
+            toast.error('Insufficient BNB for gas fees!');
+            return;
+        }
+
+        if (!isRestakeValid) {
+            toast.error('Invalid restake amount!');
+            return;
+        }
+
+        if (!hasBalance) {
+            toast.error('Insufficient USDT balance for additional amount!');
+            return;
+        }
+
+        try {
+            // Approve if needed for additional amount
+            if (additionalWei > BigInt(0) && needsApproval(additionalWei)) {
+                toast.loading('Approving USDT...', { id: 'restake' });
+                const approved = await approveTokens(additionalWei);
+                if (!approved) {
+                    toast.error('Approval failed!', { id: 'restake' });
+                    return;
+                }
+            }
+
+            toast.loading('Processing claim & restake...', { id: 'restake' });
+
+            const restakeWei = usdtToWei(restakeAmount || '0');
+            const durationSeconds = durationOptions[selectedDuration - 1]?.daysRaw || BigInt(604800);
+
+            await claimAndRestake(
+                userId,
+                BigInt(stake.stakeIndex),
+                restakeWei,
+                additionalWei,
+                durationSeconds
+            );
+
+            toast.success('Claim & Restake successful! 🎉', { id: 'restake' });
+            onSuccess();
+        } catch (error) {
+            console.error('Claim & Restake error:', error);
+            toast.error('Operation failed. Please try again.', { id: 'restake' });
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+            <div className="card-gold p-6 border-4 border-gold-primary/40 max-w-md w-full max-h-[90vh] overflow-y-auto animate-in zoom-in-95">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl font-black text-gold-primary uppercase">Claim & Restake</h3>
+                    <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl">&times;</button>
+                </div>
+
+                {/* Payout Summary */}
+                <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg mb-4">
+                    <div className="text-sm text-gray-400 mb-1">Total Payout</div>
+                    <div className="text-3xl font-black text-green-400">${formatUSDT(totalPayout)}</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                        Principal: ${formatUSDT(principal)} + Interest: ${formatUSDT(interestAmount)}
+                    </div>
+                </div>
+
+                {/* Restake Amount */}
+                <div className="mb-4">
+                    <label className="block text-sm font-bold text-gold-primary mb-2">Restake Amount</label>
+                    <div className="relative">
+                        <input
+                            type="number"
+                            value={restakeAmount}
+                            onChange={(e) => setRestakeAmount(e.target.value)}
+                            onBlur={() => {
+                                const val = Number(restakeAmount) || 0;
+                                if (val > totalPayoutNum) setRestakeAmount(totalPayoutNum.toString());
+                                if (val < 0) setRestakeAmount('0');
+                            }}
+                            placeholder="0"
+                            className="w-full px-4 py-3 bg-black/50 border-2 border-gold-primary/30 rounded-lg text-white text-lg focus:border-gold-primary focus:outline-none"
+                        />
+                        <button
+                            onClick={() => setRestakeAmount(totalPayoutNum.toString())}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 text-xs font-bold bg-gold-primary/20 text-gold-primary rounded"
+                        >
+                            MAX
+                        </button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Max: ${totalPayoutNum.toFixed(2)} from payout</p>
+                </div>
+
+                {/* Additional Amount from Wallet */}
+                <div className="mb-4">
+                    <label className="block text-sm font-bold text-gold-primary mb-2">Additional from Wallet (Optional)</label>
+                    <input
+                        type="number"
+                        value={additionalAmount}
+                        onChange={(e) => setAdditionalAmount(e.target.value)}
+                        placeholder="0"
+                        className="w-full px-4 py-3 bg-black/50 border-2 border-gold-primary/30 rounded-lg text-white text-lg focus:border-gold-primary focus:outline-none"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Balance: {getUsdtBalanceDisplay()}</p>
+                </div>
+
+                {/* Duration Selection */}
+                {(restakeAmountNum > 0 || additionalAmountNum > 0) && (
+                    <div className="mb-4">
+                        <label className="block text-sm font-bold text-gold-primary mb-2">Duration</label>
+                        <div className="grid grid-cols-4 gap-2">
+                            {durationOptions.map((duration) => (
+                                <button
+                                    key={duration.id}
+                                    onClick={() => setSelectedDuration(duration.id)}
+                                    className={`p-2 rounded-lg border-2 transition-all text-center ${selectedDuration === duration.id
+                                        ? 'border-gold-primary bg-gold-primary/20'
+                                        : 'border-white/10 bg-black/40 hover:border-gold-primary/40'
+                                        }`}
+                                >
+                                    <div className={`text-sm font-bold ${selectedDuration === duration.id ? 'text-gold-primary' : 'text-gray-400'}`}>{duration.days}d</div>
+                                    <div className={`text-xs ${selectedDuration === duration.id ? 'text-green-400' : 'text-gray-500'}`}>{duration.interest}%</div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Summary */}
+                <div className="p-3 bg-black/50 rounded-lg border border-white/10 mb-4">
+                    <div className="flex justify-between text-sm mb-2">
+                        <span className="text-gray-400">New Stake:</span>
+                        <span className="text-gold-primary font-bold">${newStakeTotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm mb-2">
+                        <span className="text-gray-400">To Balance:</span>
+                        <span className="text-green-400 font-bold">${toBalance.toFixed(2)}</span>
+                    </div>
+                    {newStakeTotal > 0 && selectedDurationInfo && (
+                        <div className="flex justify-between text-sm">
+                            <span className="text-gray-400">Expected Return:</span>
+                            <span className="text-blue-400 font-bold">+${(newStakeTotal * selectedDurationInfo.interest / 100).toFixed(2)}</span>
+                        </div>
+                    )}
+                </div>
+
+                {/* Gas Info */}
+                <div className={`p-2 rounded-lg mb-4 text-center text-sm ${hasEnoughGas() ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                    BNB for gas: {getNativeBalanceDisplay()}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="grid grid-cols-2 gap-3">
+                    <button
+                        onClick={handleJustClaim}
+                        disabled={isPending || isApproving}
+                        className="py-3 font-bold rounded-lg border-2 border-green-500 text-green-400 hover:bg-green-500/10 disabled:opacity-50 transition-all"
+                    >
+                        Just Claim
+                    </button>
+                    <button
+                        onClick={handleClaimAndRestake}
+                        disabled={isPending || isApproving || newStakeTotal === 0}
+                        className="py-3 font-black rounded-lg transition-all hover:scale-105 disabled:opacity-50 text-black"
+                        style={{
+                            background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)'
+                        }}
+                    >
+                        {isPending || isApproving ? 'Processing...' : 'Claim & Restake'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export default function ActiveStakes({ stakes, userId, onCreateStake, onRefresh }: ActiveStakesProps) {
+    const [selectedStake, setSelectedStake] = useState<StakeData | null>(null);
+
+    // Separate active and matured stakes
+    const activeStakes = stakes.filter(s => s.isActive && s.progress < 100);
+    const maturedStakes = stakes.filter(s => s.isActive && s.progress >= 100);
+
+    const handleClaimSuccess = () => {
+        setSelectedStake(null);
+        onRefresh();
+        setTimeout(() => window.location.reload(), 2000);
+    };
+
     return (
         <div className="card-gold p-6 border-4 border-gold-primary/40">
             <h2 className="text-2xl font-black text-gold-primary mb-6 uppercase">Active Stakes</h2>
+
+            {/* Matured Stakes - Ready to Claim */}
+            {maturedStakes.length > 0 && (
+                <div className="mb-6">
+                    <h3 className="text-sm font-bold text-green-400 mb-3 uppercase flex items-center gap-2">
+                        <span className="animate-pulse">🎉</span> Ready to Claim
+                    </h3>
+                    <div className="space-y-3">
+                        {maturedStakes.map((stake) => {
+                            const interestAmount = (stake.amount * stake.interest) / BigInt(10000);
+                            const totalPayout = stake.amount + interestAmount;
+
+                            return (
+                                <div key={stake.stakeIndex} className="p-4 bg-green-500/10 border-2 border-green-500/50 rounded-lg">
+                                    <div className="flex justify-between items-center mb-3">
+                                        <div>
+                                            <div className="text-xl font-black text-white">${formatUSDT(stake.amount)}</div>
+                                            <div className="text-sm text-gray-400">{stake.plan} • {stake.interestRate}%</div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-sm text-gray-400">Total Payout</div>
+                                            <div className="text-xl font-black text-green-400">${formatUSDT(totalPayout)}</div>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setSelectedStake(stake)}
+                                        className="w-full py-3 font-black uppercase rounded-lg transition-all hover:scale-105 text-black"
+                                        style={{
+                                            background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
+                                        }}
+                                    >
+                                        💰 Claim / Restake
+                                    </button>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* Active Stakes - Still Running */}
             <div className="space-y-4">
-                {stakes.length === 0 ? (
+                {activeStakes.length === 0 && maturedStakes.length === 0 ? (
                     <div className="text-center py-8 text-gray-400">
                         <div className="text-4xl mb-3">📊</div>
                         <p>No active stakes yet</p>
                         <p className="text-sm">Create your first stake to start earning!</p>
                     </div>
-                ) : (
-                    stakes.map((stake, index) => (
-                        <div key={index} className="p-5 bg-black/50 border-2 border-gold-primary/30 rounded-lg hover:border-gold-primary transition-all">
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-                                <div>
-                                    <div className="text-2xl font-black text-white mb-1">{stake.amount}</div>
-                                    <div className="text-sm text-gray-400">{stake.plan} Plan • {stake.interest} Interest</div>
+                ) : activeStakes.length > 0 && (
+                    <>
+                        <h3 className="text-sm font-bold text-gold-primary uppercase">In Progress</h3>
+                        {activeStakes.map((stake) => (
+                            <div key={stake.stakeIndex} className="p-5 bg-black/50 border-2 border-gold-primary/30 rounded-lg hover:border-gold-primary transition-all">
+                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                                    <div>
+                                        <div className="text-2xl font-black text-white mb-1">${formatUSDT(stake.amount)}</div>
+                                        <div className="text-sm text-gray-400">{stake.plan} • {stake.interestRate}% Interest</div>
+                                    </div>
+                                    {stake.endTime && <CountdownTimer endTime={stake.endTime} />}
                                 </div>
-                                {/* Countdown Timer */}
-                                {stake.endTime && (
-                                    <CountdownTimer endTime={stake.endTime} />
-                                )}
-                            </div>
 
-                            {/* Progress Bar */}
-                            <div className="relative">
-                                <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-gradient-to-r from-gold-secondary to-gold-primary transition-all duration-500 relative"
-                                        style={{ width: `${stake.progress}%` }}
-                                    >
-                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
+                                {/* Progress Bar */}
+                                <div className="relative">
+                                    <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-gradient-to-r from-gold-secondary to-gold-primary transition-all duration-500 relative"
+                                            style={{ width: `${stake.progress}%` }}
+                                        >
+                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-between items-center mt-2">
+                                        <div className="text-xs text-gold-primary font-bold">{stake.progress}% Complete</div>
+                                        <div className="text-xs text-gray-400">{stake.daysLeft} days remaining</div>
                                     </div>
                                 </div>
-                                <div className="flex justify-between items-center mt-2">
-                                    <div className="text-xs text-gold-primary font-bold">{stake.progress}% Complete</div>
-                                    <div className="text-xs text-gray-400">{stake.daysLeft} days remaining</div>
-                                </div>
                             </div>
-                        </div>
-                    ))
+                        ))}
+                    </>
                 )}
             </div>
 
@@ -130,6 +436,16 @@ export default function ActiveStakes({ stakes, onCreateStake }: ActiveStakesProp
             >
                 + Create New Stake
             </button>
+
+            {/* Claim & Restake Modal */}
+            {selectedStake && userId && (
+                <ClaimRestakeModal
+                    stake={selectedStake}
+                    userId={userId}
+                    onClose={() => setSelectedStake(null)}
+                    onSuccess={handleClaimSuccess}
+                />
+            )}
         </div>
     );
 }

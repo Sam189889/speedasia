@@ -25,7 +25,7 @@ export function useUserTransactions() {
   ) => {
     const transaction = prepareContractCall({
       contract,
-      method:"function register(bytes5 _referrerId, uint256 _amount, uint256 _duration)",
+      method: "function register(bytes5 _referrerId, uint256 _amount, uint256 _duration)",
       params: [referrerId, amount, duration],
     });
     return sendTransaction(transaction);
@@ -99,11 +99,35 @@ export function useUserTransactions() {
     return sendTransaction(transaction);
   }, [contract, sendTransaction]);
 
+  /**
+   * Claim matured stake and restake in one transaction
+   * @param userId - User's userId (bytes5)
+   * @param stakeIndex - Index of stake to claim
+   * @param restakeAmount - Amount from claimed payout to restake
+   * @param additionalAmount - Extra amount from wallet (0 if none)
+   * @param duration - Duration for new stake in seconds
+   */
+  const claimAndRestake = useCallback(async (
+    userId: `0x${string}`,
+    stakeIndex: bigint,
+    restakeAmount: bigint,
+    additionalAmount: bigint,
+    duration: bigint
+  ) => {
+    const transaction = prepareContractCall({
+      contract,
+      method: "function claimAndRestake(bytes5 _userId, uint256 _stakeIndex, uint256 _restakeAmount, uint256 _additionalAmount, uint256 _duration)",
+      params: [userId, stakeIndex, restakeAmount, additionalAmount, duration],
+    });
+    return sendTransaction(transaction);
+  }, [contract, sendTransaction]);
+
   return {
     // Transaction functions
     register,
     stake,
     claimStake,
+    claimAndRestake,
     claimLifetimeReward,
     withdraw,
 
