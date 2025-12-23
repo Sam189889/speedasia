@@ -80,7 +80,10 @@ export default function OverviewTab({ userId, onCreateStake }: OverviewTabProps)
     ];
 
     // Transform stakes data - include all fields needed for claim & restake
-    const activeStakes = dashboard.stakes?.filter(s => s.isActive).map((stake, index) => {
+    // CRITICAL FIX: Contract expects array INDEX (position in userStakes array), NOT stakeId!
+    // We must preserve original index even after filtering active stakes
+    // So we MAP first (to capture originalIndex), then FILTER
+    const activeStakes = dashboard.stakes?.map((stake, originalIndex) => {
         const daysTotal = Number(stake.duration) / 86400;
         const now = Date.now() / 1000;
         const startTime = Number(stake.startTime);
@@ -89,7 +92,7 @@ export default function OverviewTab({ userId, onCreateStake }: OverviewTabProps)
         const progress = Math.min(100, Math.max(0, Math.floor(((now - startTime) / (endTime - startTime)) * 100)));
 
         return {
-            stakeIndex: index,
+            stakeIndex: originalIndex, // CORRECT: Use original array index, NOT stakeId!
             amount: stake.amount,
             interest: stake.interestRate,
             endTime: endTime,
@@ -100,7 +103,7 @@ export default function OverviewTab({ userId, onCreateStake }: OverviewTabProps)
             progress: progress,
             daysLeft: daysLeft
         };
-    }) || [];
+    }).filter(s => s.isActive) || [];
 
     // Refetch function for after claim
     const handleRefresh = () => {

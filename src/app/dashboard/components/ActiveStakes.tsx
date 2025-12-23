@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { useUserTransactions } from '@/hooks/user/useUserTransactions';
 import { useUserBalances } from '@/hooks/user/useUserBalances';
@@ -85,6 +86,95 @@ function CountdownTimer({ endTime }: { endTime: number }) {
     );
 }
 
+// Simple Just Claim Modal
+function JustClaimModal({
+    stake,
+    userId,
+    onClose,
+    onSuccess
+}: {
+    stake: StakeData;
+    userId: `0x${string}`;
+    onClose: () => void;
+    onSuccess: () => void;
+}) {
+    const { claimStake, isPending } = useUserTransactions();
+    const { hasEnoughGas, getNativeBalanceDisplay } = useUserBalances();
+
+    // Calculate total payout
+    const principal = stake.amount;
+    const interestAmount = (principal * stake.interest) / BigInt(10000);
+    const totalPayout = principal + interestAmount;
+
+    const handleClaim = async () => {
+        if (!hasEnoughGas()) {
+            toast.error('Insufficient BNB for gas fees!');
+            return;
+        }
+
+        try {
+            toast.loading('Claiming stake...', { id: 'claim' });
+            await claimStake(userId, BigInt(stake.stakeIndex));
+            toast.success('Stake claimed successfully! 🎉', { id: 'claim' });
+            onSuccess();
+        } catch (error) {
+            console.error('Claim error:', error);
+            toast.error('Claim failed. Please try again.', { id: 'claim' });
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/95 p-4">
+            <div className="card-gold p-6 border-4 border-green-500/40 max-w-sm w-full animate-in zoom-in-95">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl font-black text-green-400 uppercase">💰 Claim Stake</h3>
+                    <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl">&times;</button>
+                </div>
+
+                {/* Payout Summary */}
+                <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg mb-4 text-center">
+                    <div className="text-sm text-gray-400 mb-1">You will receive</div>
+                    <div className="text-4xl font-black text-green-400">${formatUSDT(totalPayout)}</div>
+                    <div className="text-xs text-gray-500 mt-2">
+                        Principal: ${formatUSDT(principal)} + Interest: ${formatUSDT(interestAmount)}
+                    </div>
+                </div>
+
+                {/* Where it goes */}
+                <div className="p-3 bg-black/50 rounded-lg border border-white/10 mb-4 text-center">
+                    <div className="text-sm text-gray-400">Amount will be added to your</div>
+                    <div className="text-lg font-bold text-gold-primary">Available Balance</div>
+                </div>
+
+                {/* Gas Info */}
+                <div className={`p-2 rounded-lg mb-4 text-center text-sm ${hasEnoughGas() ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                    BNB for gas: {getNativeBalanceDisplay()}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="grid grid-cols-2 gap-3">
+                    <button
+                        onClick={onClose}
+                        className="py-3 font-bold rounded-lg border-2 border-gray-600 text-gray-400 hover:border-gray-400 transition-all"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleClaim}
+                        disabled={isPending}
+                        className="py-3 font-black rounded-lg transition-all hover:scale-105 disabled:opacity-50 text-black"
+                        style={{
+                            background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
+                        }}
+                    >
+                        {isPending ? 'Processing...' : 'Confirm Claim'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 // Claim & Restake Modal
 function ClaimRestakeModal({
     stake,
@@ -101,7 +191,7 @@ function ClaimRestakeModal({
     const [additionalAmount, setAdditionalAmount] = useState('');
     const [selectedDuration, setSelectedDuration] = useState(1);
 
-    const { claimStake, claimAndRestake, isPending } = useUserTransactions();
+    const { claimAndRestake, isPending } = useUserTransactions();
     const { hasEnoughGas, hasEnoughUsdt, getUsdtBalanceDisplay, getNativeBalanceDisplay } = useUserBalances();
     const { needsApproval, approveTokens, isApproving } = useTokenApproval();
     const { durations } = useContractConfig();
@@ -133,24 +223,6 @@ function ClaimRestakeModal({
     const additionalWei = additionalAmountNum > 0 ? usdtToWei(additionalAmount) : BigInt(0);
     const hasBalance = additionalAmountNum === 0 || hasEnoughUsdt(additionalWei);
 
-    // Handle Just Claim
-    const handleJustClaim = async () => {
-        if (!hasEnoughGas()) {
-            toast.error('Insufficient BNB for gas fees!');
-            return;
-        }
-
-        try {
-            toast.loading('Claiming stake...', { id: 'claim' });
-            await claimStake(userId, BigInt(stake.stakeIndex));
-            toast.success('Stake claimed successfully! 🎉', { id: 'claim' });
-            onSuccess();
-        } catch (error) {
-            console.error('Claim error:', error);
-            toast.error('Claim failed. Please try again.', { id: 'claim' });
-        }
-    };
-
     // Handle Claim & Restake
     const handleClaimAndRestake = async () => {
         if (!hasEnoughGas()) {
@@ -160,6 +232,11 @@ function ClaimRestakeModal({
 
         if (!isRestakeValid) {
             toast.error('Invalid restake amount!');
+            return;
+        }
+
+        if (newStakeTotal === 0) {
+            toast.error('Please enter restake amount!');
             return;
         }
 
@@ -184,6 +261,17 @@ function ClaimRestakeModal({
             const restakeWei = usdtToWei(restakeAmount || '0');
             const durationSeconds = durationOptions[selectedDuration - 1]?.daysRaw || BigInt(604800);
 
+            // Debug log
+            console.log('ClaimAndRestake params:', {
+                userId,
+                stakeIndex: stake.stakeIndex,
+                restakeAmount: restakeAmount,
+                restakeWei: restakeWei.toString(),
+                additionalAmount: additionalAmount,
+                additionalWei: additionalWei.toString(),
+                duration: durationSeconds.toString()
+            });
+
             await claimAndRestake(
                 userId,
                 BigInt(stake.stakeIndex),
@@ -194,104 +282,106 @@ function ClaimRestakeModal({
 
             toast.success('Claim & Restake successful! 🎉', { id: 'restake' });
             onSuccess();
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('Claim & Restake error:', error);
-            toast.error('Operation failed. Please try again.', { id: 'restake' });
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            toast.error(`Failed: ${errorMessage.slice(0, 100)}`, { id: 'restake' });
         }
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-            <div className="card-gold p-6 border-4 border-gold-primary/40 max-w-md w-full max-h-[90vh] overflow-y-auto animate-in zoom-in-95">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/95 p-4">
+            <div className="card-gold p-6 border-4 border-gold-primary/40 max-w-sm w-full max-h-[85vh] overflow-y-auto animate-in zoom-in-95">
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-black text-gold-primary uppercase">Claim & Restake</h3>
+                    <h3 className="text-xl font-black text-gold-primary uppercase">🔄 Claim & Restake</h3>
                     <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl">&times;</button>
                 </div>
 
                 {/* Payout Summary */}
                 <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg mb-4">
-                    <div className="text-sm text-gray-400 mb-1">Total Payout</div>
+                    <div className="text-sm text-gray-400 mb-1">Total Payout Available</div>
                     <div className="text-3xl font-black text-green-400">${formatUSDT(totalPayout)}</div>
                     <div className="text-xs text-gray-500 mt-1">
                         Principal: ${formatUSDT(principal)} + Interest: ${formatUSDT(interestAmount)}
                     </div>
                 </div>
 
-                {/* Restake Amount */}
-                <div className="mb-4">
-                    <label className="block text-sm font-bold text-gold-primary mb-2">Restake Amount</label>
-                    <div className="relative">
+                {/* Restake & Additional Amount - Single Row */}
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                    {/* Restake Amount */}
+                    <div>
+                        <label className="block text-xs font-bold text-gold-primary mb-1">From Payout</label>
+                        <div className="relative">
+                            <input
+                                type="number"
+                                value={restakeAmount}
+                                onChange={(e) => setRestakeAmount(e.target.value)}
+                                onBlur={() => {
+                                    const val = Number(restakeAmount) || 0;
+                                    if (val > totalPayoutNum) setRestakeAmount(totalPayoutNum.toString());
+                                    if (val < 0) setRestakeAmount('0');
+                                }}
+                                placeholder="0"
+                                className="w-full px-3 py-2 bg-black/50 border-2 border-gold-primary/30 rounded-lg text-white text-sm focus:border-gold-primary focus:outline-none"
+                            />
+                            <button
+                                onClick={() => setRestakeAmount(totalPayoutNum.toString())}
+                                className="absolute right-1 top-1/2 -translate-y-1/2 px-2 py-0.5 text-[10px] font-bold bg-gold-primary/20 text-gold-primary rounded"
+                            >
+                                MAX
+                            </button>
+                        </div>
+                        <p className="text-[10px] text-gray-500 mt-1">Max: ${totalPayoutNum.toFixed(0)}</p>
+                    </div>
+
+                    {/* Additional Amount */}
+                    <div>
+                        <label className="block text-xs font-bold text-gold-primary mb-1">From Wallet</label>
                         <input
                             type="number"
-                            value={restakeAmount}
-                            onChange={(e) => setRestakeAmount(e.target.value)}
-                            onBlur={() => {
-                                const val = Number(restakeAmount) || 0;
-                                if (val > totalPayoutNum) setRestakeAmount(totalPayoutNum.toString());
-                                if (val < 0) setRestakeAmount('0');
-                            }}
+                            value={additionalAmount}
+                            onChange={(e) => setAdditionalAmount(e.target.value)}
                             placeholder="0"
-                            className="w-full px-4 py-3 bg-black/50 border-2 border-gold-primary/30 rounded-lg text-white text-lg focus:border-gold-primary focus:outline-none"
+                            className="w-full px-3 py-2 bg-black/50 border-2 border-gold-primary/30 rounded-lg text-white text-sm focus:border-gold-primary focus:outline-none"
                         />
-                        <button
-                            onClick={() => setRestakeAmount(totalPayoutNum.toString())}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 text-xs font-bold bg-gold-primary/20 text-gold-primary rounded"
-                        >
-                            MAX
-                        </button>
+                        <p className="text-[10px] text-gray-500 mt-1">Bal: {getUsdtBalanceDisplay()}</p>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">Max: ${totalPayoutNum.toFixed(2)} from payout</p>
-                </div>
-
-                {/* Additional Amount from Wallet */}
-                <div className="mb-4">
-                    <label className="block text-sm font-bold text-gold-primary mb-2">Additional from Wallet (Optional)</label>
-                    <input
-                        type="number"
-                        value={additionalAmount}
-                        onChange={(e) => setAdditionalAmount(e.target.value)}
-                        placeholder="0"
-                        className="w-full px-4 py-3 bg-black/50 border-2 border-gold-primary/30 rounded-lg text-white text-lg focus:border-gold-primary focus:outline-none"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Balance: {getUsdtBalanceDisplay()}</p>
                 </div>
 
                 {/* Duration Selection */}
-                {(restakeAmountNum > 0 || additionalAmountNum > 0) && (
-                    <div className="mb-4">
-                        <label className="block text-sm font-bold text-gold-primary mb-2">Duration</label>
-                        <div className="grid grid-cols-4 gap-2">
-                            {durationOptions.map((duration) => (
-                                <button
-                                    key={duration.id}
-                                    onClick={() => setSelectedDuration(duration.id)}
-                                    className={`p-2 rounded-lg border-2 transition-all text-center ${selectedDuration === duration.id
-                                        ? 'border-gold-primary bg-gold-primary/20'
-                                        : 'border-white/10 bg-black/40 hover:border-gold-primary/40'
-                                        }`}
-                                >
-                                    <div className={`text-sm font-bold ${selectedDuration === duration.id ? 'text-gold-primary' : 'text-gray-400'}`}>{duration.days}d</div>
-                                    <div className={`text-xs ${selectedDuration === duration.id ? 'text-green-400' : 'text-gray-500'}`}>{duration.interest}%</div>
-                                </button>
-                            ))}
-                        </div>
+                <div className="mb-4">
+                    <label className="block text-sm font-bold text-gold-primary mb-2">New Stake Duration</label>
+                    <div className="grid grid-cols-4 gap-2">
+                        {durationOptions.map((duration) => (
+                            <button
+                                key={duration.id}
+                                onClick={() => setSelectedDuration(duration.id)}
+                                className={`p-2 rounded-lg border-2 transition-all text-center ${selectedDuration === duration.id
+                                    ? 'border-gold-primary bg-gold-primary/20'
+                                    : 'border-white/10 bg-black/40 hover:border-gold-primary/40'
+                                    }`}
+                            >
+                                <div className={`text-sm font-bold ${selectedDuration === duration.id ? 'text-gold-primary' : 'text-gray-400'}`}>{duration.days}d</div>
+                                <div className={`text-xs ${selectedDuration === duration.id ? 'text-green-400' : 'text-gray-500'}`}>{duration.interest}%</div>
+                            </button>
+                        ))}
                     </div>
-                )}
+                </div>
 
                 {/* Summary */}
                 <div className="p-3 bg-black/50 rounded-lg border border-white/10 mb-4">
                     <div className="flex justify-between text-sm mb-2">
-                        <span className="text-gray-400">New Stake:</span>
+                        <span className="text-gray-400">New Stake Amount:</span>
                         <span className="text-gold-primary font-bold">${newStakeTotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm mb-2">
-                        <span className="text-gray-400">To Balance:</span>
+                        <span className="text-gray-400">To Available Balance:</span>
                         <span className="text-green-400 font-bold">${toBalance.toFixed(2)}</span>
                     </div>
                     {newStakeTotal > 0 && selectedDurationInfo && (
                         <div className="flex justify-between text-sm">
                             <span className="text-gray-400">Expected Return:</span>
-                            <span className="text-blue-400 font-bold">+${(newStakeTotal * selectedDurationInfo.interest / 100).toFixed(2)}</span>
+                            <span className="text-blue-400 font-bold">+${(newStakeTotal * selectedDurationInfo.interest / 100).toFixed(2)} ({selectedDurationInfo.interest}%)</span>
                         </div>
                     )}
                 </div>
@@ -304,11 +394,10 @@ function ClaimRestakeModal({
                 {/* Action Buttons */}
                 <div className="grid grid-cols-2 gap-3">
                     <button
-                        onClick={handleJustClaim}
-                        disabled={isPending || isApproving}
-                        className="py-3 font-bold rounded-lg border-2 border-green-500 text-green-400 hover:bg-green-500/10 disabled:opacity-50 transition-all"
+                        onClick={onClose}
+                        className="py-3 font-bold rounded-lg border-2 border-gray-600 text-gray-400 hover:border-gray-400 transition-all"
                     >
-                        Just Claim
+                        Cancel
                     </button>
                     <button
                         onClick={handleClaimAndRestake}
@@ -318,7 +407,7 @@ function ClaimRestakeModal({
                             background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)'
                         }}
                     >
-                        {isPending || isApproving ? 'Processing...' : 'Claim & Restake'}
+                        {isPending || isApproving ? 'Processing...' : 'Confirm Restake'}
                     </button>
                 </div>
             </div>
@@ -327,14 +416,16 @@ function ClaimRestakeModal({
 }
 
 export default function ActiveStakes({ stakes, userId, onCreateStake, onRefresh }: ActiveStakesProps) {
-    const [selectedStake, setSelectedStake] = useState<StakeData | null>(null);
+    const [claimStake, setClaimStake] = useState<StakeData | null>(null);
+    const [restakeStake, setRestakeStake] = useState<StakeData | null>(null);
 
     // Separate active and matured stakes
     const activeStakes = stakes.filter(s => s.isActive && s.progress < 100);
     const maturedStakes = stakes.filter(s => s.isActive && s.progress >= 100);
 
-    const handleClaimSuccess = () => {
-        setSelectedStake(null);
+    const handleSuccess = () => {
+        setClaimStake(null);
+        setRestakeStake(null);
         onRefresh();
         setTimeout(() => window.location.reload(), 2000);
     };
@@ -366,15 +457,27 @@ export default function ActiveStakes({ stakes, userId, onCreateStake, onRefresh 
                                             <div className="text-xl font-black text-green-400">${formatUSDT(totalPayout)}</div>
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={() => setSelectedStake(stake)}
-                                        className="w-full py-3 font-black uppercase rounded-lg transition-all hover:scale-105 text-black"
-                                        style={{
-                                            background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
-                                        }}
-                                    >
-                                        💰 Claim / Restake
-                                    </button>
+                                    {/* Two Separate Buttons */}
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <button
+                                            onClick={() => setClaimStake(stake)}
+                                            className="py-3 font-black uppercase rounded-lg transition-all hover:scale-105 text-black text-sm"
+                                            style={{
+                                                background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
+                                            }}
+                                        >
+                                            💰 Just Claim
+                                        </button>
+                                        <button
+                                            onClick={() => setRestakeStake(stake)}
+                                            className="py-3 font-black uppercase rounded-lg transition-all hover:scale-105 text-black text-sm"
+                                            style={{
+                                                background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)'
+                                            }}
+                                        >
+                                            🔄 Restake
+                                        </button>
+                                    </div>
                                 </div>
                             );
                         })}
@@ -437,14 +540,26 @@ export default function ActiveStakes({ stakes, userId, onCreateStake, onRefresh 
                 + Create New Stake
             </button>
 
-            {/* Claim & Restake Modal */}
-            {selectedStake && userId && (
-                <ClaimRestakeModal
-                    stake={selectedStake}
+            {/* Just Claim Modal - Portal to body */}
+            {claimStake && userId && typeof document !== 'undefined' && createPortal(
+                <JustClaimModal
+                    stake={claimStake}
                     userId={userId}
-                    onClose={() => setSelectedStake(null)}
-                    onSuccess={handleClaimSuccess}
-                />
+                    onClose={() => setClaimStake(null)}
+                    onSuccess={handleSuccess}
+                />,
+                document.body
+            )}
+
+            {/* Claim & Restake Modal - Portal to body */}
+            {restakeStake && userId && typeof document !== 'undefined' && createPortal(
+                <ClaimRestakeModal
+                    stake={restakeStake}
+                    userId={userId}
+                    onClose={() => setRestakeStake(null)}
+                    onSuccess={handleSuccess}
+                />,
+                document.body
             )}
         </div>
     );
