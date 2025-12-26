@@ -501,7 +501,7 @@ export default function ActiveStakes({ stakes, userId, onCreateStake, onRefresh 
                                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                                     <div>
                                         <div className="text-2xl font-black text-white mb-1">${formatUSDT(stake.amount)}</div>
-                                        <div className="text-sm text-gray-400">{stake.plan} • {stake.interestRate}% Interest</div>
+                                        <div className="text-sm text-gray-400">{stake.plan} • {stake.interestRate}% Return</div>
                                     </div>
                                     {stake.endTime && <CountdownTimer endTime={stake.endTime} />}
                                 </div>
