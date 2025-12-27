@@ -19,9 +19,9 @@ export default function EarningsTab({ userId }: EarningsTabProps) {
     const { dashboard, isLoading } = useUserDashboard(userId);
     const { levelCounts, levelBusiness } = useAllLevelsSummary(userId);
 
-    // Calculate totals from levels (same as TeamTab)
-    const totalLevelUsers = levelCounts.reduce((sum, count) => sum + Number(count), 0);
-    const totalLevelBusiness = levelBusiness.reduce((sum, biz) => sum + biz, BigInt(0));
+    // Calculate totals from levels (same as TeamTab) - only if we have level data
+    const totalLevelUsers = levelCounts.length > 0 ? levelCounts.reduce((sum, count) => sum + Number(count), 0) : 0;
+    const totalLevelBusiness = levelBusiness.length > 0 ? levelBusiness.reduce((sum, biz) => sum + biz, BigInt(0)) : BigInt(0);
 
     const {
         teamSizeRequired,
@@ -271,9 +271,11 @@ export default function EarningsTab({ userId }: EarningsTabProps) {
                         const businessReq = businessRequired[index] || BigInt(0);
 
                         // Calculate progress - using qualifyingDirectCount for $20+ referrals
-                        const teamProgress = Math.min(100, (Number(team.teamSize) / teamReq) * 100 || 0);
+                        const currentTeam = totalLevelUsers || Number(team.teamSize);
+                        const currentBusiness = totalLevelBusiness || team.teamBusinessVolume;
+                        const teamProgress = Math.min(100, (currentTeam / teamReq) * 100 || 0);
                         const directProgress = Math.min(100, (Number(team.qualifyingDirectCount) / directReq) * 100 || 0);
-                        const businessProgress = Math.min(100, (Number(team.teamBusinessVolume) / Number(businessReq)) * 100 || 0);
+                        const businessProgress = Math.min(100, (Number(currentBusiness) / Number(businessReq)) * 100 || 0);
                         const overallProgress = Math.min(100, (teamProgress + directProgress + businessProgress) / 3);
 
                         return (
@@ -318,8 +320,8 @@ export default function EarningsTab({ userId }: EarningsTabProps) {
                                         {/* Team Size */}
                                         <div className="flex items-center justify-between text-xs">
                                             <span className="text-gray-400">Team Size</span>
-                                            <span className={Number(team.teamSize) >= teamReq ? 'text-green-400' : 'text-gray-500'}>
-                                                {Number(team.teamSize)} / {teamReq}
+                                            <span className={currentTeam >= teamReq ? 'text-green-400' : 'text-gray-500'}>
+                                                {currentTeam} / {teamReq}
                                             </span>
                                         </div>
                                         <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
@@ -340,8 +342,8 @@ export default function EarningsTab({ userId }: EarningsTabProps) {
                                         {/* Business */}
                                         <div className="flex items-center justify-between text-xs">
                                             <span className="text-gray-400">Team Business</span>
-                                            <span className={team.teamBusinessVolume >= businessReq ? 'text-green-400' : 'text-gray-500'}>
-                                                ${formatUSDT(team.teamBusinessVolume, 0)} / ${formatUSDT(businessReq, 0)}
+                                            <span className={currentBusiness >= businessReq ? 'text-green-400' : 'text-gray-500'}>
+                                                ${formatUSDT(currentBusiness, 0)} / ${formatUSDT(businessReq, 0)}
                                             </span>
                                         </div>
                                         <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
