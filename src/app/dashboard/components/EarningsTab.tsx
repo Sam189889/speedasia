@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useUserDashboard } from '@/hooks/user/useUserDashboard';
-import { useLifetimeRewardProgress } from '@/hooks/user/useUserData';
+import { useLifetimeRewardProgress, useAllLevelsSummary } from '@/hooks/user/useUserData';
 import { useUserTransactions } from '@/hooks/user/useUserTransactions';
 import { useUserBalances } from '@/hooks/user/useUserBalances';
 import { formatUSDT, usdtToWei } from '@/hooks/common/formatters';
@@ -17,6 +17,12 @@ export default function EarningsTab({ userId }: EarningsTabProps) {
     const [showWithdrawModal, setShowWithdrawModal] = useState(false);
 
     const { dashboard, isLoading } = useUserDashboard(userId);
+    const { levelCounts, levelBusiness } = useAllLevelsSummary(userId);
+
+    // Calculate totals from levels (same as TeamTab)
+    const totalLevelUsers = levelCounts.reduce((sum, count) => sum + Number(count), 0);
+    const totalLevelBusiness = levelBusiness.reduce((sum, biz) => sum + biz, BigInt(0));
+
     const {
         teamSizeRequired,
         directsRequired,
@@ -242,7 +248,7 @@ export default function EarningsTab({ userId }: EarningsTabProps) {
                 {/* Current Stats for Progress */}
                 <div className="grid grid-cols-3 gap-2 mb-4 p-3 bg-black/50 rounded-lg border border-white/10">
                     <div className="text-center">
-                        <div className="text-lg font-black text-gold-primary">{Number(team.teamSize)}</div>
+                        <div className="text-lg font-black text-gold-primary">{totalLevelUsers || Number(team.teamSize)}</div>
                         <div className="text-[10px] text-gray-400 uppercase">Team Size</div>
                     </div>
                     <div className="text-center border-x border-white/10">
@@ -250,7 +256,7 @@ export default function EarningsTab({ userId }: EarningsTabProps) {
                         <div className="text-[10px] text-gray-400 uppercase">Directs ($20+)</div>
                     </div>
                     <div className="text-center">
-                        <div className="text-lg font-black text-blue-400">${formatUSDT(team.teamBusinessVolume, 0)}</div>
+                        <div className="text-lg font-black text-blue-400">${formatUSDT(totalLevelBusiness || team.teamBusinessVolume, 0)}</div>
                         <div className="text-[10px] text-gray-400 uppercase">Business</div>
                     </div>
                 </div>

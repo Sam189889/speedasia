@@ -16,10 +16,11 @@ interface OverviewTabProps {
 export default function OverviewTab({ userId, onCreateStake, onWithdraw }: OverviewTabProps) {
     // Fetch dashboard data
     const { dashboard, isLoading } = useUserDashboard(userId);
-    const { levelCounts } = useAllLevelsSummary(userId);
+    const { levelCounts, levelBusiness } = useAllLevelsSummary(userId);
 
-    // Calculate total team from levels (same as TeamTab)
+    // Calculate totals from levels (same as TeamTab)
     const totalLevelUsers = levelCounts.reduce((sum, count) => sum + Number(count), 0);
+    const totalLevelBusiness = levelBusiness.reduce((sum, biz) => sum + biz, BigInt(0));
 
     // Loading state
     if (isLoading || !dashboard) {
@@ -224,7 +225,7 @@ export default function OverviewTab({ userId, onCreateStake, onWithdraw }: Overv
                         <div className="mt-4 p-3 bg-gold-primary/10 rounded-lg border border-gold-primary/30">
                             <div className="flex justify-between items-center">
                                 <span className="text-gray-400 text-sm">Team Business</span>
-                                <span className="text-gold-primary font-bold">${formatUSDT(dashboard.team?.teamBusinessVolume || BigInt(0))}</span>
+                                <span className="text-gold-primary font-bold">${formatUSDT(totalLevelBusiness || dashboard.team?.teamBusinessVolume || BigInt(0))}</span>
                             </div>
                         </div>
                     </div>
