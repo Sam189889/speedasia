@@ -137,6 +137,7 @@ export default function DashboardPage() {
 
     // Handlers
     const handleCreateStake = () => setActiveTab('stake');
+    const handleWithdraw = () => setActiveTab('earnings');
 
     const renderTabContent = () => {
         switch (activeTab) {
@@ -145,6 +146,7 @@ export default function DashboardPage() {
                     <OverviewTab
                         userId={userId}
                         onCreateStake={handleCreateStake}
+                        onWithdraw={handleWithdraw}
                     />
                 );
             case 'stake':

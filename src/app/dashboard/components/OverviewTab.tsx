@@ -9,9 +9,10 @@ import ActiveStakes from './ActiveStakes';
 interface OverviewTabProps {
     userId: `0x${string}` | undefined;
     onCreateStake: () => void;
+    onWithdraw: () => void;
 }
 
-export default function OverviewTab({ userId, onCreateStake }: OverviewTabProps) {
+export default function OverviewTab({ userId, onCreateStake, onWithdraw }: OverviewTabProps) {
     // Fetch dashboard data
     const { dashboard, isLoading } = useUserDashboard(userId);
 
@@ -147,6 +148,7 @@ export default function OverviewTab({ userId, onCreateStake }: OverviewTabProps)
                                 </div>
                             </div>
                             <button
+                                onClick={onWithdraw}
                                 className="px-6 py-3 rounded-lg font-bold text-black transition-all hover:scale-105"
                                 style={{
                                     background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
