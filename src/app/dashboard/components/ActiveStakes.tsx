@@ -7,6 +7,7 @@ import { useUserTransactions } from '@/hooks/user/useUserTransactions';
 import { useUserBalances } from '@/hooks/user/useUserBalances';
 import { useTokenApproval } from '@/hooks/user/useTokenApproval';
 import { useContractConfig } from '@/hooks/common/useContractData';
+import { useUserDashboard } from '@/hooks/user/useUserDashboard';
 import { formatUSDT, usdtToWei } from '@/hooks/common/formatters';
 
 interface StakeData {
@@ -194,7 +195,10 @@ function ClaimRestakeModal({
     const { claimAndRestake, isPending } = useUserTransactions();
     const { hasEnoughGas, hasEnoughUsdt, getUsdtBalanceDisplay, getNativeBalanceDisplay } = useUserBalances();
     const { needsApproval, approveTokens, isApproving } = useTokenApproval();
-    const { durations } = useContractConfig();
+    const { config, durations } = useContractConfig();
+
+    // Get user's dashboard to find last stake amount
+    const { dashboard } = useUserDashboard(userId);
 
     // Calculate total payout (principal + interest)
     const principal = stake.amount;
@@ -216,10 +220,27 @@ function ClaimRestakeModal({
     const restakeAmountNum = Number(restakeAmount) || 0;
     const additionalAmountNum = Number(additionalAmount) || 0;
     const newStakeTotal = restakeAmountNum + additionalAmountNum;
+    const newStakeTotalWei = usdtToWei(newStakeTotal.toString());
     const toBalance = totalPayoutNum - restakeAmountNum;
+
+    // Stake limits from contract config
+    const minStake = config?.stakingTier1 || BigInt(5e18); // Default $5
+    const maxStake = config?.maxStaking || BigInt(5000e18); // Default $5000
+
+    // Get user's last stake amount (minimum for new stake) - same as StakeTab
+    const getMinStakeAmount = (): bigint => {
+        if (!dashboard?.stakes || dashboard.stakes.length === 0) {
+            return config?.stakingTier1 || BigInt(0);
+        }
+        const lastStake = dashboard.stakes[dashboard.stakes.length - 1];
+        return lastStake.amount;
+    };
+    const minStakeAmount = getMinStakeAmount();
 
     // Validation
     const isRestakeValid = restakeAmountNum <= totalPayoutNum && restakeAmountNum >= 0;
+    const isAboveMinStake = newStakeTotal === 0 || newStakeTotalWei >= minStakeAmount;
+    const isWithinLimits = newStakeTotal === 0 || (newStakeTotalWei >= minStake && newStakeTotalWei <= maxStake);
     const additionalWei = additionalAmountNum > 0 ? usdtToWei(additionalAmount) : BigInt(0);
     const hasBalance = additionalAmountNum === 0 || hasEnoughUsdt(additionalWei);
 
@@ -237,6 +258,21 @@ function ClaimRestakeModal({
 
         if (newStakeTotal === 0) {
             toast.error('Please enter restake amount!');
+            return;
+        }
+
+        if (newStakeTotalWei < minStakeAmount) {
+            toast.error(`Minimum stake is $${formatUSDT(minStakeAmount)} (based on your last stake)!`);
+            return;
+        }
+
+        if (newStakeTotalWei < minStake) {
+            toast.error(`Minimum stake is $${formatUSDT(minStake)}!`);
+            return;
+        }
+
+        if (newStakeTotalWei > maxStake) {
+            toast.error(`Maximum stake is $${formatUSDT(maxStake)}!`);
             return;
         }
 
@@ -306,6 +342,22 @@ function ClaimRestakeModal({
                     </div>
                 </div>
 
+                {/* Validation Warning */}
+                {newStakeTotal > 0 && !isAboveMinStake && (
+                    <div className="p-2 bg-red-500/10 border border-red-500/30 rounded-lg mb-4 text-center">
+                        <p className="text-red-400 text-xs">
+                            ⚠️ Your last stake was ${formatUSDT(minStakeAmount)}. Minimum required is ${formatUSDT(minStakeAmount)}!
+                        </p>
+                    </div>
+                )}
+                {newStakeTotal > 0 && isAboveMinStake && !isWithinLimits && (
+                    <div className="p-2 bg-red-500/10 border border-red-500/30 rounded-lg mb-4 text-center">
+                        <p className="text-red-400 text-xs">
+                            ⚠️ Maximum stake allowed is ${formatUSDT(maxStake)}!
+                        </p>
+                    </div>
+                )}
+
                 {/* Restake & Additional Amount - Single Row */}
                 <div className="grid grid-cols-2 gap-3 mb-4">
                     {/* Restake Amount */}
@@ -325,13 +377,27 @@ function ClaimRestakeModal({
                                 className="w-full px-3 py-2 bg-black/50 border-2 border-gold-primary/30 rounded-lg text-white text-sm focus:border-gold-primary focus:outline-none"
                             />
                             <button
-                                onClick={() => setRestakeAmount(totalPayoutNum.toString())}
+                                onClick={() => {
+                                    // Fill full payout first
+                                    setRestakeAmount(totalPayoutNum.toString());
+
+                                    const maxStakeNum = Number(formatUSDT(maxStake).replace(/,/g, ''));
+                                    const minStakeNum = Number(formatUSDT(minStakeAmount).replace(/,/g, ''));
+                                    const totalWithAdditional = totalPayoutNum + additionalAmountNum;
+
+                                    // Then show appropriate error
+                                    if (totalWithAdditional < minStakeNum) {
+                                        toast.error(`Your last stake was $${minStakeNum}. Minimum required is $${minStakeNum}!`);
+                                    } else if (totalWithAdditional > maxStakeNum) {
+                                        toast.error(`Maximum stake allowed is $${maxStakeNum}!`);
+                                    }
+                                }}
                                 className="absolute right-1 top-1/2 -translate-y-1/2 px-2 py-0.5 text-[10px] font-bold bg-gold-primary/20 text-gold-primary rounded"
                             >
                                 MAX
                             </button>
                         </div>
-                        <p className="text-[10px] text-gray-500 mt-1">Max: ${totalPayoutNum.toFixed(0)}</p>
+                        <p className="text-[10px] text-gray-500 mt-1">Max: ${Math.min(totalPayoutNum, Number(formatUSDT(maxStake).replace(/,/g, ''))).toFixed(0)}</p>
                     </div>
 
                     {/* Additional Amount */}

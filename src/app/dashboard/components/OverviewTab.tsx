@@ -2,6 +2,7 @@
 
 import toast from 'react-hot-toast';
 import { useUserDashboard } from '@/hooks/user/useUserDashboard';
+import { useAllLevelsSummary } from '@/hooks/user/useUserData';
 import { formatUSDT, decodeUserId } from '@/hooks/common/formatters';
 import StatsCard from './StatsCard';
 import ActiveStakes from './ActiveStakes';
@@ -15,6 +16,10 @@ interface OverviewTabProps {
 export default function OverviewTab({ userId, onCreateStake, onWithdraw }: OverviewTabProps) {
     // Fetch dashboard data
     const { dashboard, isLoading } = useUserDashboard(userId);
+    const { levelCounts } = useAllLevelsSummary(userId);
+
+    // Calculate total team from levels (same as TeamTab)
+    const totalLevelUsers = levelCounts.reduce((sum, count) => sum + Number(count), 0);
 
     // Loading state
     if (isLoading || !dashboard) {
@@ -75,7 +80,7 @@ export default function OverviewTab({ userId, onCreateStake, onWithdraw }: Overv
         },
         {
             label: 'Team Size',
-            value: dashboard.team?.teamSize ? Number(dashboard.team.teamSize) : 0,
+            value: totalLevelUsers || (dashboard.team?.teamSize ? Number(dashboard.team.teamSize) : 0),
             icon: '🌐'
         }
     ];
@@ -212,7 +217,7 @@ export default function OverviewTab({ userId, onCreateStake, onWithdraw }: Overv
                                 <div className="text-xs text-gray-400">Levels</div>
                             </div>
                             <div className="text-center p-3 bg-black/50 rounded-lg border border-gold-primary/20">
-                                <div className="text-2xl font-black text-white">{Number(dashboard.team?.teamSize || 0)}</div>
+                                <div className="text-2xl font-black text-white">{totalLevelUsers || Number(dashboard.team?.teamSize || 0)}</div>
                                 <div className="text-xs text-gray-400">Team Size</div>
                             </div>
                         </div>

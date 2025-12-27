@@ -1,7 +1,7 @@
 // Testnet addresses
-// export const SPEED_ADDRESS = "0xa60711667b220f369dc983e97a9b4c5be905c8a5"
-// export const INT_ADDRESS = "0xe7bf773d33e64b06e3ebf30a918830b17ca5ebbb"
-// export const USDT_ADDRESS = "0x6A5E29FEf354843776c42Cd533237eCb17e30020"
+// export const SPEED_ADDRESS = "0xFB3D6F8A1c82652839b562aE727aaBB118f4f74e"
+// export const INT_ADDRESS = "0xB6ebf91Bb28fAD123Bbe10fEff72063AF6B45751"
+// export const USDT_ADDRESS = "0x17DdB9d0f7d54fB86aE3f73069A4F34cDF3Df3B1"
 // export const ADMIN_ADDRESS = "0xe6666633Ff58dfA607C3827464D4B51478e7628a"
 
 // Mainnet addresses
