@@ -1,9 +1,9 @@
 export default function StakingIncome() {
-  const stakingPlans = [
-    { days: "7", interest: "3", icon: "🌱", label: "Starter" },
-    { days: "14", interest: "7", icon: "📈", label: "Growth" },
-    { days: "21", interest: "16", icon: "🚀", label: "Pro" },
-    { days: "30", interest: "25", icon: "👑", label: "Premium" },
+  const features = [
+    { icon: "📊", title: "Daily 1% ROI", desc: "Consistent daily returns on your stake" },
+    { icon: "⏰", title: "Claim Anytime", desc: "Withdraw your daily earnings 24/7" },
+    { icon: "🔄", title: "Compound Option", desc: "Reinvest profits to grow faster" },
+    { icon: "🔓", title: "Unstake Anytime", desc: "Get your capital back when needed" },
   ];
 
   return (
@@ -14,42 +14,56 @@ export default function StakingIncome() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="text-center mb-16">
-          <h2 className="section-heading">STAKING PLANS</h2>
+          <h2 className="section-heading">DAILY ROI SYSTEM</h2>
           <div className="accent-line"></div>
-          <p className="text-gray-400 mt-4">Choose your plan and start earning guaranteed returns</p>
+          <p className="text-gray-400 mt-4">Earn consistent daily returns with full flexibility</p>
         </div>
 
-        {/* Staking Cards Grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto mb-12">
-          {stakingPlans.map((plan, idx) => (
+        {/* Main ROI Card */}
+        <div className="max-w-3xl mx-auto mb-12">
+          <div className="card-gold p-8 md:p-12 border-4 border-gold-primary hover:border-gold-primary/60 relative overflow-hidden text-center">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-gold-primary/5 rounded-full blur-3xl"></div>
+            
+            <div className="relative z-10">
+              <div className="w-32 h-32 mx-auto mb-6 rounded-full bg-gradient-to-br from-gold-primary to-gold-secondary flex items-center justify-center shadow-[0_0_60px_rgba(255,215,0,0.4)]">
+                <span className="text-black font-black text-5xl">1%</span>
+              </div>
+              
+              <h3 className="text-gold-primary font-black text-4xl mb-3">Daily Returns</h3>
+              <p className="text-gray-300 text-lg mb-8">
+                Earn <span className="text-gold-primary font-bold">1% per day</span> on your staked amount.
+                With booster active, earn up to <span className="text-green-400 font-bold">1.5% daily</span>!
+              </p>
+
+              {/* Example Calculation */}
+              <div className="grid sm:grid-cols-3 gap-4">
+                <div className="p-4 bg-black/50 rounded-xl border border-gold-primary/20">
+                  <div className="text-gray-400 text-sm mb-1">$100 Stake</div>
+                  <div className="text-green-400 font-bold text-xl">$1/day</div>
+                </div>
+                <div className="p-4 bg-black/50 rounded-xl border border-gold-primary/20">
+                  <div className="text-gray-400 text-sm mb-1">$1,000 Stake</div>
+                  <div className="text-green-400 font-bold text-xl">$10/day</div>
+                </div>
+                <div className="p-4 bg-black/50 rounded-xl border border-gold-primary/20">
+                  <div className="text-gray-400 text-sm mb-1">$5,000 Stake</div>
+                  <div className="text-green-400 font-bold text-xl">$50/day</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Features Grid */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto mb-12">
+          {features.map((feature, idx) => (
             <div
               key={idx}
-              className={`card-gold p-6 border-4 ${idx === 3 ? 'border-gold-primary bg-gradient-to-br from-gold-primary/20 to-transparent' : 'border-gold-primary/40'} hover:border-gold-primary transition-all group text-center hover:scale-105`}
+              className="card-gold p-6 border-2 border-gold-primary/40 hover:border-gold-primary transition-all hover:scale-105 text-center"
             >
-              {/* Badge */}
-              {idx === 3 && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-gold-primary rounded-full">
-                  <span className="text-xs font-bold text-black">BEST VALUE</span>
-                </div>
-              )}
-
-              {/* Icon */}
-              <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">{plan.icon}</div>
-
-              {/* Label */}
-              <div className="text-gray-400 text-sm uppercase mb-2">{plan.label}</div>
-
-              {/* Days */}
-              <div className="text-white font-bold text-2xl mb-2">{plan.days} Days</div>
-
-              {/* Interest */}
-              <div className="text-4xl font-black text-gold-primary mb-4">{plan.interest}%</div>
-
-              {/* Calculate example */}
-              <div className="p-3 bg-black/50 rounded-lg border border-gold-primary/20">
-                <div className="text-xs text-gray-400">$100 → </div>
-                <div className="text-green-400 font-bold">${100 + parseInt(plan.interest)}</div>
-              </div>
+              <div className="text-5xl mb-4">{feature.icon}</div>
+              <h4 className="text-white font-bold text-lg mb-2">{feature.title}</h4>
+              <p className="text-gray-400 text-sm">{feature.desc}</p>
             </div>
           ))}
         </div>
@@ -59,9 +73,9 @@ export default function StakingIncome() {
           <div className="flex items-center gap-4">
             <div className="text-4xl">💡</div>
             <div>
-              <h3 className="text-green-400 font-bold text-lg mb-1">Assured Returns!</h3>
+              <h3 className="text-green-400 font-bold text-lg mb-1">Full Control!</h3>
               <p className="text-gray-300">
-                Your <span className="text-gold-primary font-bold">principal + profit</span> are automatically credited to your wallet upon completion. No claiming needed!
+                <span className="text-gold-primary font-bold">Claim daily</span>, <span className="text-blue-400 font-bold">compound</span> to grow, or <span className="text-purple-400 font-bold">unstake</span> anytime. Your money, your choice!
               </p>
             </div>
           </div>

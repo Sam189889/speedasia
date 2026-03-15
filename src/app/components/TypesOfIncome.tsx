@@ -1,25 +1,25 @@
 export default function TypesOfIncome() {
   const incomes = [
     {
-      title: "STAKING INCOME",
+      title: "DAILY ROI",
       icon: "📊",
-      desc: "Earn up to 25% returns on your staked USDT",
-      highlight: "Up to 25%",
+      desc: "Earn consistent 1% daily returns on your stake",
+      highlight: "1% Daily",
       color: "from-green-500/20",
       border: "border-green-500/40 hover:border-green-400"
     },
     {
-      title: "DIRECT INCOME",
-      icon: "🎯",
-      desc: "Get 3% instant bonus on direct referrals",
-      highlight: "3% Instant",
+      title: "BOOSTER INCOME",
+      icon: "🚀",
+      desc: "Get 1.5% daily ROI when you qualify (0.5% extra)",
+      highlight: "1.5% Daily",
       color: "from-blue-500/20",
       border: "border-blue-500/40 hover:border-blue-400"
     },
     {
       title: "LEVEL INCOME",
       icon: "📈",
-      desc: "Earn from 20 levels of your downline team",
+      desc: "Earn from 20 levels of your team's ROI",
       highlight: "20 Levels",
       color: "from-purple-500/20",
       border: "border-purple-500/40 hover:border-purple-400"
@@ -27,8 +27,8 @@ export default function TypesOfIncome() {
     {
       title: "LIFETIME REWARDS",
       icon: "🏆",
-      desc: "Unlock exclusive rewards up to $100,000",
-      highlight: "$100K Max",
+      desc: "Unlock exclusive rewards up to $25,000",
+      highlight: "$25K Max",
       color: "from-gold-primary/20",
       border: "border-gold-primary/40 hover:border-gold-primary"
     },

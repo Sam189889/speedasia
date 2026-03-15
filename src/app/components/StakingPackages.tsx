@@ -1,10 +1,4 @@
 export default function StakingPackages() {
-  const packages = [
-    { amount: "$5", label: "Fixed", icon: "🌱", name: "Starter", color: "from-green-500/20", border: "border-green-500/40", features: ["Up to 25% Returns", "Instant Withdrawals"] },
-    { amount: "$10", label: "Fixed", icon: "📊", name: "Basic", color: "from-blue-500/20", border: "border-blue-500/40", features: ["Up to 25% Returns", "Instant Withdrawals"] },
-    { amount: "$20 - $5,000", label: "Flexible", icon: "👑", name: "Premium", color: "from-gold-primary/20", border: "border-gold-primary", popular: true, features: ["Up to 25% Returns", "Instant Withdrawals", "Direct Income Eligible", "Level Income Eligible"] },
-  ];
-
   return (
     <section id="packages" className="py-24 relative overflow-hidden">
       {/* Background Effects */}
@@ -13,53 +7,69 @@ export default function StakingPackages() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="text-center mb-16">
-          <span className="text-gold-primary text-sm font-bold uppercase tracking-wider">Flexible Investment Options</span>
-          <h2 className="section-heading mt-2">STAKING PACKAGES</h2>
+          <span className="text-gold-primary text-sm font-bold uppercase tracking-wider">Flexible Staking System</span>
+          <h2 className="section-heading mt-2">PROGRESSIVE STAKING</h2>
           <div className="accent-line"></div>
-          <p className="text-gray-400 mt-4">Choose your investment size and start earning today</p>
+          <p className="text-gray-400 mt-4">Stake any amount from $20 to $5,000 and grow progressively</p>
         </div>
 
-        {/* Package Cards */}
-        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-12">
-          {packages.map((pkg, idx) => (
-            <div
-              key={idx}
-              className={`card-gold p-8 border-4 ${pkg.border} transition-all hover:scale-105 bg-gradient-to-br ${pkg.color} to-transparent relative overflow-hidden text-center`}
-            >
-              {pkg.popular && (
-                <div className="absolute top-0 right-0 bg-gold-primary text-black text-xs font-bold px-4 py-1 rounded-bl-lg">
-                  MOST POPULAR
+        {/* Main Staking Card */}
+        <div className="max-w-4xl mx-auto mb-12">
+          <div className="card-gold p-8 md:p-12 border-4 border-gold-primary bg-gradient-to-br from-gold-primary/20 to-transparent relative overflow-hidden">
+            <div className="absolute top-0 right-0 bg-gold-primary text-black text-xs font-bold px-4 py-1 rounded-bl-lg">
+              FLEXIBLE
+            </div>
+
+            <div className="text-center mb-8">
+              <div className="text-6xl mb-4">💎</div>
+              <h3 className="text-gold-primary font-black text-4xl mb-3">$20 - $5,000</h3>
+              <p className="text-gray-300 text-lg">
+                Start with any amount and <span className="text-gold-primary font-bold">progressively increase</span> your stake over time
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="p-4 bg-black/50 rounded-xl border border-gold-primary/20">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-2xl">📊</span>
+                  <span className="text-white font-bold">Daily 1% ROI</span>
                 </div>
-              )}
-
-              <div className="text-5xl mb-4">{pkg.icon}</div>
-              <h3 className="text-xl font-black text-white mb-2">{pkg.name}</h3>
-              <div className="text-xs text-gray-500 uppercase mb-4">{pkg.label} Amount</div>
-
-              <div className="p-4 bg-black/40 rounded-xl mb-6">
-                <div className="text-gold-primary font-black text-3xl">{pkg.amount}</div>
+                <p className="text-gray-400 text-sm">Earn consistent daily returns</p>
               </div>
-
-              <div className="space-y-2 text-sm">
-                {pkg.features.map((feature, fidx) => (
-                  <div key={fidx} className="flex items-center justify-center gap-2">
-                    <span className="text-green-400">✓</span>
-                    <span className="text-gray-300">{feature}</span>
-                  </div>
-                ))}
+              <div className="p-4 bg-black/50 rounded-xl border border-gold-primary/20">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-2xl">🚀</span>
+                  <span className="text-white font-bold">Booster Eligible</span>
+                </div>
+                <p className="text-gray-400 text-sm">Qualify for 1.5% daily ROI</p>
+              </div>
+              <div className="p-4 bg-black/50 rounded-xl border border-gold-primary/20">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-2xl">📈</span>
+                  <span className="text-white font-bold">Level Income</span>
+                </div>
+                <p className="text-gray-400 text-sm">Earn from 20 levels deep</p>
+              </div>
+              <div className="p-4 bg-black/50 rounded-xl border border-gold-primary/20">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-2xl">🏆</span>
+                  <span className="text-white font-bold">Lifetime Rewards</span>
+                </div>
+                <p className="text-gray-400 text-sm">Unlock milestone bonuses</p>
               </div>
             </div>
-          ))}
+          </div>
         </div>
 
-        {/* Bottom Info */}
-        <div className="max-w-3xl mx-auto card-gold p-6 border-2 border-gold-primary/30 bg-gradient-to-r from-gold-primary/10 to-transparent mb-8">
+        {/* Progressive Staking Info */}
+        <div className="max-w-3xl mx-auto card-gold p-6 border-2 border-purple-500/30 bg-gradient-to-r from-purple-500/10 to-transparent mb-8">
           <div className="flex items-center gap-4">
-            <div className="text-4xl">💡</div>
+            <div className="text-4xl">�</div>
             <div>
-              <h4 className="text-gold-primary font-bold mb-1">Pro Tip</h4>
+              <h4 className="text-purple-400 font-bold mb-1">Progressive Staking</h4>
               <p className="text-gray-300 text-sm">
-                Stake <span className="text-gold-primary font-bold">$20 or more</span> to unlock direct referral income and level income for maximum earning potential!
+                Each new stake must be <span className="text-gold-primary font-bold">equal or higher</span> than your previous stake. 
+                Build your capital <span className="text-green-400 font-bold">progressively</span> over time!
               </p>
             </div>
           </div>
