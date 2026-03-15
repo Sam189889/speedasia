@@ -1,13 +1,18 @@
-// Testnet addresses
-// export const SPEED_ADDRESS = "0xFB3D6F8A1c82652839b562aE727aaBB118f4f74e"
-// export const INT_ADDRESS = "0xB6ebf91Bb28fAD123Bbe10fEff72063AF6B45751"
-// export const USDT_ADDRESS = "0x17DdB9d0f7d54fB86aE3f73069A4F34cDF3Df3B1"
-// export const ADMIN_ADDRESS = "0xe6666633Ff58dfA607C3827464D4B51478e7628a"
+/**
+ * Contract addresses - now managed in src/config/env.ts
+ * Import from env for type-safe, centralized configuration
+ */
+import { env } from "@/config/env";
 
-// Mainnet addresses
-export const SPEED_ADDRESS = "0x8186afd23dbfe55bb4079441a14e8ddd53f72a86"
-export const INT_ADDRESS = "0x0559b579893f778D7B7c70f98A41e07b38C9fa04"
-export const USDT_ADDRESS = "0x55d398326f99059fF775485246999027B3197955"
-export const ADMIN_ADDRESS = "0x2a38acb4cd565b064ceb30d6abcdc3b12402e649"
+export const SPEED_ADDRESS = env.contracts.speed; // Proxy
+export const INT_ADDRESS = env.contracts.interface; // SAW V2
+export const USDT_ADDRESS = env.contracts.usdt;
+export const ADMIN_ADDRESS = env.contracts.admin;
 
-
+// Legacy exports for backward compatibility
+export {
+  SPEED_ADDRESS as SPEED_ADDRESS_TESTNET,
+  INT_ADDRESS as INT_ADDRESS_TESTNET,
+  USDT_ADDRESS as USDT_ADDRESS_TESTNET,
+  ADMIN_ADDRESS as ADMIN_ADDRESS_TESTNET,
+};

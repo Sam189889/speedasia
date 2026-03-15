@@ -1,5 +1,5 @@
 "use client";
-import { useReadContract } from "thirdweb/react";
+import { useReadContract } from "wagmi";
 import { useSpeed } from "@/hooks/contracts/useSpeed";
 import { validateAddress, isEmptyUserId, decodeUserId, encodeUserId } from "@/hooks/common/formatters";
 
@@ -20,10 +20,10 @@ export function useUserValidation(walletAddress: string | undefined) {
     const isValidAddress = walletAddress ? validateAddress(walletAddress) : false;
 
     const { data: userId, isPending } = useReadContract({
-        contract,
-        method: "function getUserIdByAddress(address _user) view returns (bytes5)",
-        params: [walletAddress ?? "0x0000000000000000000000000000000000000000"] as const,
-        queryOptions: { enabled: !!walletAddress && isValidAddress },
+        ...contract,
+        functionName: "addressToUserId",
+        args: [(walletAddress ?? "0x0000000000000000000000000000000000000000") as `0x${string}`],
+        query: { enabled: !!walletAddress && isValidAddress },
     });
 
     // Check if user is registered (userId is not empty/zero)
@@ -70,10 +70,10 @@ export function useReferrerValidation(referrerId: string | undefined) {
     const isValidFormat = referrerId ? referrerId.length > 0 && referrerId.length <= 5 : false;
 
     const { data: referrerAddress, isPending } = useReadContract({
-        contract,
-        method: "function getUserByUserId(bytes5 _userId) view returns (address)",
-        params: [encodedUserId ?? "0x0000000000"] as const,
-        queryOptions: { enabled: !!encodedUserId && isValidFormat },
+        ...contract,
+        functionName: "userIdToAddress",
+        args: [encodedUserId ?? "0x0000000000"],
+        query: { enabled: !!encodedUserId && isValidFormat },
     });
 
     // Check if referrer exists (address is not zero)

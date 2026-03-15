@@ -1,15 +1,10 @@
-"use client"
-import { getContract } from "thirdweb";
+"use client";
 import { USDT_ADDRESS } from "@/constants/addresses";
-import { client } from "@/client/client";
-import { chain } from "@/chain/chain";
+import { erc20Abi } from "viem";
 
 export function useUsdt() {
-    const contract = getContract({
-        client: client,
-        address: USDT_ADDRESS,
-        chain: chain,
-    });
-
-    return contract;
+    return {
+        address: USDT_ADDRESS as `0x${string}`,
+        abi: erc20Abi,
+    };
 }

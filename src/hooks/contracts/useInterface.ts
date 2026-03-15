@@ -1,15 +1,10 @@
-"use client"
-import { getContract } from "thirdweb";
+"use client";
 import { INT_ADDRESS } from "@/constants/addresses";
-import { client } from "@/client/client";
-import { chain } from "@/chain/chain";
+import { SAWABI } from "@/constants/abis";
 
 export function useInterface() {
-    const contract = getContract({
-        client: client,
-        address: INT_ADDRESS,
-        chain: chain,
-    });
-
-    return contract;
+    return {
+        address: INT_ADDRESS as `0x${string}`,
+        abi: SAWABI,
+    };
 }

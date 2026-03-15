@@ -1,6 +1,5 @@
 "use client";
-import { prepareContractCall } from "thirdweb";
-import { useSendTransaction } from "thirdweb/react";
+import { useWriteContract } from "wagmi";
 import { useSpeed } from "@/hooks/contracts/useSpeed";
 import { useCallback } from "react";
 
@@ -11,7 +10,7 @@ import { useCallback } from "react";
  */
 export function useAdminTransactions() {
     const contract = useSpeed();
-    const { mutateAsync: sendTransaction, isPending, error } = useSendTransaction();
+    const { writeContractAsync, isPending, error } = useWriteContract();
 
     /**
      * Set direct income configuration
@@ -22,13 +21,12 @@ export function useAdminTransactions() {
         percent: bigint,
         minStake: bigint
     ) => {
-        const transaction = prepareContractCall({
-            contract,
-            method: "function setDirectIncomeConfig(uint256 _percent, uint256 _minStake)",
-            params: [percent, minStake],
+        return writeContractAsync({
+            ...contract,
+            functionName: "setDirectIncomeConfig",
+            args: [percent, minStake],
         });
-        return sendTransaction(transaction);
-    }, [contract, sendTransaction]);
+    }, [contract, writeContractAsync]);
 
     /**
      * Set staking durations
@@ -43,13 +41,12 @@ export function useAdminTransactions() {
         d3: bigint,
         d4: bigint
     ) => {
-        const transaction = prepareContractCall({
-            contract,
-            method: "function setDurations(uint256 _d1, uint256 _d2, uint256 _d3, uint256 _d4)",
-            params: [d1, d2, d3, d4],
+        return writeContractAsync({
+            ...contract,
+            functionName: "setDurations",
+            args: [d1, d2, d3, d4],
         });
-        return sendTransaction(transaction);
-    }, [contract, sendTransaction]);
+    }, [contract, writeContractAsync]);
 
     /**
      * Set interest rates for staking durations
@@ -64,13 +61,12 @@ export function useAdminTransactions() {
         r3: bigint,
         r4: bigint
     ) => {
-        const transaction = prepareContractCall({
-            contract,
-            method: "function setInterestRates(uint256 _r1, uint256 _r2, uint256 _r3, uint256 _r4)",
-            params: [r1, r2, r3, r4],
+        return writeContractAsync({
+            ...contract,
+            functionName: "setInterestRates",
+            args: [r1, r2, r3, r4],
         });
-        return sendTransaction(transaction);
-    }, [contract, sendTransaction]);
+    }, [contract, writeContractAsync]);
 
     /**
      * Set level unlock configuration
@@ -81,13 +77,12 @@ export function useAdminTransactions() {
         minStake: bigint,
         businessForAll: bigint
     ) => {
-        const transaction = prepareContractCall({
-            contract,
-            method: "function setLevelUnlockConfig(uint256 _minStake, uint256 _businessForAll)",
-            params: [minStake, businessForAll],
+        return writeContractAsync({
+            ...contract,
+            functionName: "setLevelUnlockConfig",
+            args: [minStake, businessForAll],
         });
-        return sendTransaction(transaction);
-    }, [contract, sendTransaction]);
+    }, [contract, writeContractAsync]);
 
     /**
      * Set minimum withdrawal amount
@@ -96,13 +91,12 @@ export function useAdminTransactions() {
     const setMinWithdrawal = useCallback(async (
         amount: bigint
     ) => {
-        const transaction = prepareContractCall({
-            contract,
-            method: "function setMinWithdrawal(uint256 _amount)",
-            params: [amount],
+        return writeContractAsync({
+            ...contract,
+            functionName: "setMinWithdrawal",
+            args: [amount],
         });
-        return sendTransaction(transaction);
-    }, [contract, sendTransaction]);
+    }, [contract, writeContractAsync]);
 
     /**
      * Set partners and their shares
@@ -113,13 +107,12 @@ export function useAdminTransactions() {
         partners: string[],
         shares: bigint[]
     ) => {
-        const transaction = prepareContractCall({
-            contract,
-            method: "function setPartners(address[] _partners, uint256[] _shares)",
-            params: [partners, shares],
+        return writeContractAsync({
+            ...contract,
+            functionName: "setPartners",
+            args: [partners as `0x${string}`[], shares],
         });
-        return sendTransaction(transaction);
-    }, [contract, sendTransaction]);
+    }, [contract, writeContractAsync]);
 
     /**
      * Set staking tiers
@@ -134,13 +127,12 @@ export function useAdminTransactions() {
         tier3Min: bigint,
         max: bigint
     ) => {
-        const transaction = prepareContractCall({
-            contract,
-            method: "function setStakingTiers(uint256 _tier1, uint256 _tier2, uint256 _tier3Min, uint256 _max)",
-            params: [tier1, tier2, tier3Min, max],
+        return writeContractAsync({
+            ...contract,
+            functionName: "setStakingTiers",
+            args: [tier1, tier2, tier3Min, max],
         });
-        return sendTransaction(transaction);
-    }, [contract, sendTransaction]);
+    }, [contract, writeContractAsync]);
 
     /**
      * Emergency withdraw funds from contract
@@ -149,13 +141,12 @@ export function useAdminTransactions() {
     const emergencyWithdraw = useCallback(async (
         amount: bigint
     ) => {
-        const transaction = prepareContractCall({
-            contract,
-            method: "function emergencyWithdraw(uint256 _amount)",
-            params: [amount],
+        return writeContractAsync({
+            ...contract,
+            functionName: "emergencyWithdraw",
+            args: [amount],
         });
-        return sendTransaction(transaction);
-    }, [contract, sendTransaction]);
+    }, [contract, writeContractAsync]);
 
     /**
      * Transfer first user role to new address
@@ -164,13 +155,12 @@ export function useAdminTransactions() {
     const transferFirstUser = useCallback(async (
         newFirstUser: string
     ) => {
-        const transaction = prepareContractCall({
-            contract,
-            method: "function transferFirstUser(address _newFirstUser)",
-            params: [newFirstUser],
+        return writeContractAsync({
+            ...contract,
+            functionName: "transferFirstUser",
+            args: [newFirstUser as `0x${string}`],
         });
-        return sendTransaction(transaction);
-    }, [contract, sendTransaction]);
+    }, [contract, writeContractAsync]);
 
     /**
      * Set level income percentages for all 20 levels
@@ -180,13 +170,12 @@ export function useAdminTransactions() {
         percents: bigint[]
     ) => {
         if (percents.length !== 20) throw new Error("Must provide exactly 20 percentages");
-        const transaction = prepareContractCall({
-            contract,
-            method: "function setLevelIncomePercents(uint256[20] _percents)",
-            params: [percents as unknown as readonly [bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint]],
+        return writeContractAsync({
+            ...contract,
+            functionName: "setLevelIncomePercents",
+            args: [percents as unknown as readonly [bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint]],
         });
-        return sendTransaction(transaction);
-    }, [contract, sendTransaction]);
+    }, [contract, writeContractAsync]);
 
     /**
      * Set a specific lifetime reward tier
@@ -203,13 +192,50 @@ export function useAdminTransactions() {
         businessVolume: bigint,
         rewardAmount: bigint
     ) => {
-        const transaction = prepareContractCall({
-            contract,
-            method: "function setLifetimeRewardTier(uint256 _tier, uint256 _teamSize, uint256 _directReferrals, uint256 _businessVolume, uint256 _rewardAmount)",
-            params: [tier, teamSize, directReferrals, businessVolume, rewardAmount],
+        return writeContractAsync({
+            ...contract,
+            functionName: "setLifetimeRewardTier",
+            args: [tier, teamSize, directReferrals, businessVolume, rewardAmount],
         });
-        return sendTransaction(transaction);
-    }, [contract, sendTransaction]);
+    }, [contract, writeContractAsync]);
+
+    /**
+     * Initialize V2 features (one-time activation)
+     */
+    const initializeV2 = useCallback(async () => {
+        return writeContractAsync({
+            ...contract,
+            functionName: "initializeV2",
+        });
+    }, [contract, writeContractAsync]);
+
+    /**
+     * Bulk migrate all V1 stakes for a single user
+     * @param userId - User's 5-character ID
+     */
+    const bulkMigrateUserStakes = useCallback(async (userId: string) => {
+        return writeContractAsync({
+            ...contract,
+            functionName: "bulkMigrateUserStakes",
+            args: [userId as `0x${string}`],
+        });
+    }, [contract, writeContractAsync]);
+
+    /**
+     * Bulk migrate ALL users' V1 stakes in batches
+     * @param startIndex - Start user index
+     * @param endIndex - End user index (exclusive)
+     */
+    const bulkMigrateAllStakes = useCallback(async (
+        startIndex: bigint,
+        endIndex: bigint
+    ) => {
+        return writeContractAsync({
+            ...contract,
+            functionName: "bulkMigrateAllStakes",
+            args: [startIndex, endIndex],
+        });
+    }, [contract, writeContractAsync]);
 
     return {
         // Config setters
@@ -228,6 +254,11 @@ export function useAdminTransactions() {
 
         // Emergency
         emergencyWithdraw,
+
+        // V2 Migration
+        initializeV2,
+        bulkMigrateUserStakes,
+        bulkMigrateAllStakes,
 
         // State
         isPending,

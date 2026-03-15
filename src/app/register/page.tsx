@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useActiveAccount } from "thirdweb/react";
-import { shortenAddress } from "thirdweb/utils";
+import { useAccount } from "wagmi";
+import { shortenAddress } from "@/hooks/common/formatters";
 import Link from 'next/link';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -20,17 +20,12 @@ import WalletConnect from '@/app/walletConnect/WalletConnect';
 
 const RegisterContent: React.FC = () => {
     const searchParams = useSearchParams();
+    const { address: userAddress } = useAccount();
 
     // Form state
     const [referrerId, setReferrerId] = useState('');
-    const [selectedTier, setSelectedTier] = useState<1 | 2 | 3>(1);
-    const [tier3Amount, setTier3Amount] = useState('');
-    const [selectedDuration, setSelectedDuration] = useState(1);
+    const [tier3Amount, setTier3Amount] = useState('20'); // V2: Default to $20 minimum
     const [registrationSuccess, setRegistrationSuccess] = useState(false);
-
-    // Wallet
-    const activeAccount = useActiveAccount();
-    const userAddress = activeAccount?.address;
 
     // Validation hooks
     const { isRegistered, isLoading: checkingRegistration, displayUserId, userId } = useUserValidation(userAddress);
@@ -48,20 +43,9 @@ const RegisterContent: React.FC = () => {
     // Contract config - Get tiers and durations from blockchain
     const { config, stakingTiers, durations, isLoading: configLoading } = useContractConfig();
 
-    // Calculate stake amount based on selected tier
+    // V2: Calculate stake amount from custom input ($20-$5000)
     const getStakeAmountWei = (): bigint => {
-        if (!config) return BigInt(0);
-
-        switch (selectedTier) {
-            case 1:
-                return config.stakingTier1;
-            case 2:
-                return config.stakingTier2;
-            case 3:
-                return tier3Amount ? usdtToWei(tier3Amount) : BigInt(0);
-            default:
-                return BigInt(0);
-        }
+        return tier3Amount ? usdtToWei(tier3Amount) : BigInt(0);
     };
 
     const stakeAmountWei = getStakeAmountWei();
@@ -79,24 +63,12 @@ const RegisterContent: React.FC = () => {
 
     const tierAmounts = getTierAmounts();
 
-    // Get duration info from contract
-    const getDurationInfo = () => {
-        if (!durations) return [];
-        return durations.map((d, index) => ({
-            id: index + 1,
-            days: Number(d.days) / 86400, // Convert seconds to days
-            interest: Number(d.interest) / 100, // Convert basis points to percentage
-        }));
-    };
+    // V2: No duration selection needed (daily 1% ROI system)
+    const dailyRoiPercent = 1; // 1% daily ROI for V2 stakes
 
-    const durationOptions = getDurationInfo();
-    const selectedDurationInfo = durationOptions.find(d => d.id === selectedDuration) || durationOptions[0];
-
-    // Validate Tier 3 amount
-    const validateTier3Amount = (): boolean => {
-        if (selectedTier !== 3) return true;
+    // V2: Validate amount ($20-$5000)
+    const validateStakeAmount = (): boolean => {
         if (!tier3Amount || !config) return false;
-
         const amount = usdtToWei(tier3Amount);
         return amount >= config.stakingTier3Min && amount <= config.maxStaking;
     };
@@ -122,7 +94,7 @@ const RegisterContent: React.FC = () => {
             return;
         }
 
-        if (selectedTier === 3 && !validateTier3Amount()) {
+        if (!validateStakeAmount()) {
             toast.error(`Amount must be between $${tierAmounts.tier3Min} and $${tierAmounts.max}`);
             return;
         }
@@ -150,13 +122,12 @@ const RegisterContent: React.FC = () => {
                 toast.success('USDT approved!', { id: 'register' });
             }
 
-            // Step 2: Register user
+            // Step 2: Register user with V2 stake (duration = 0)
             toast.loading('Processing registration...', { id: 'register' });
 
             const encodedReferrer = encodeUserId(referrerId);
-            // Get actual duration in seconds from config (durations array has .days which is actually seconds from contract)
-            const durationSeconds = durations ? durations[selectedDuration - 1]?.days : BigInt(604800);
-            await register(encodedReferrer, stakeAmountWei, durationSeconds);
+            // V2: duration = 0 for daily ROI system
+            await register(encodedReferrer, stakeAmountWei, BigInt(0));
 
             setRegistrationSuccess(true);
             toast.success('Registration successful! Welcome to Speed Asia! 🎉', { id: 'register' });
@@ -201,13 +172,13 @@ const RegisterContent: React.FC = () => {
                                 <span className="text-gray-400">Referrer:</span>
                                 <span className="text-gold-primary font-bold">{referrerId}</span>
                             </div>
-                            <div className="flex justify-between py-2 border-b border-white/10">
+                            <div className="flex justify-between py-2">
                                 <span className="text-gray-400">Staked Amount:</span>
                                 <span className="text-green-400 font-bold">${formatUSDT(stakeAmountWei)} USDT</span>
                             </div>
                             <div className="flex justify-between py-2">
-                                <span className="text-gray-400">Duration:</span>
-                                <span className="text-white font-bold">{selectedDurationInfo?.days} Days ({selectedDurationInfo?.interest}% Return)</span>
+                                <span className="text-gray-400">Daily ROI:</span>
+                                <span className="text-white font-bold">{dailyRoiPercent}% (Claim Daily)</span>
                             </div>
                         </div>
                     </div>
@@ -366,51 +337,14 @@ const RegisterContent: React.FC = () => {
                             <p className="text-gray-500 text-xs mt-1">🔒 Referrer is set from your invitation link and cannot be changed</p>
                         </div>
 
-                        {/* Staking Tier Selection */}
+                        {/* V2 Staking Amount Selection */}
                         <div className="mb-4">
                             <label className="block text-sm font-bold text-gold-primary mb-2 uppercase tracking-wider">
-                                Select Package
+                                Stake Amount ($20 - $5,000 USDT)
                             </label>
-                            <div className="grid grid-cols-3 gap-2">
-                                {/* Tier 1 - Fixed */}
-                                <button
-                                    onClick={() => setSelectedTier(1)}
-                                    className={`p-3 rounded-lg border-2 transition-all text-center ${selectedTier === 1
-                                        ? 'border-gold-primary bg-gradient-to-br from-gold-primary/30 to-gold-secondary/20 scale-[1.02] shadow-[0_0_20px_rgba(255,215,0,0.5)]'
-                                        : 'border-white/10 bg-black/40 hover:border-gold-primary/40 hover:bg-black/60'
-                                        }`}
-                                >
-                                    <div className={`text-xs font-bold ${selectedTier === 1 ? 'text-white' : 'text-gray-500'}`}>TIER 1</div>
-                                    <div className={`text-xl font-black ${selectedTier === 1 ? 'text-gold-primary' : 'text-gray-300'}`}>${tierAmounts.tier1}</div>
-                                </button>
 
-                                {/* Tier 2 - Fixed */}
-                                <button
-                                    onClick={() => setSelectedTier(2)}
-                                    className={`p-3 rounded-lg border-2 transition-all text-center ${selectedTier === 2
-                                        ? 'border-gold-primary bg-gradient-to-br from-gold-primary/30 to-gold-secondary/20 scale-[1.02] shadow-[0_0_20px_rgba(255,215,0,0.5)]'
-                                        : 'border-white/10 bg-black/40 hover:border-gold-primary/40 hover:bg-black/60'
-                                        }`}
-                                >
-                                    <div className={`text-xs font-bold ${selectedTier === 2 ? 'text-white' : 'text-gray-500'}`}>TIER 2</div>
-                                    <div className={`text-xl font-black ${selectedTier === 2 ? 'text-gold-primary' : 'text-gray-300'}`}>${tierAmounts.tier2}</div>
-                                </button>
-
-                                {/* Tier 3 - Variable */}
-                                <button
-                                    onClick={() => setSelectedTier(3)}
-                                    className={`p-3 rounded-lg border-2 transition-all text-center ${selectedTier === 3
-                                        ? 'border-gold-primary bg-gradient-to-br from-gold-primary/30 to-gold-secondary/20 scale-[1.02] shadow-[0_0_20px_rgba(255,215,0,0.5)]'
-                                        : 'border-white/10 bg-black/40 hover:border-gold-primary/40 hover:bg-black/60'
-                                        }`}
-                                >
-                                    <div className={`text-xs font-bold ${selectedTier === 3 ? 'text-white' : 'text-gray-500'}`}>TIER 3</div>
-                                    <div className={`text-sm font-black ${selectedTier === 3 ? 'text-gold-primary' : 'text-gray-300'}`}>${tierAmounts.tier3Min}+</div>
-                                </button>
-                            </div>
-
-                            {/* Tier 3 Custom Amount Selector */}
-                            {selectedTier === 3 && config && (() => {
+                            {/* Custom Amount Selector */}
+                            {config && (() => {
                                 const minAmount = Number(formatUSDT(config.stakingTier3Min, 0).replace(/,/g, ''));
                                 const maxAmount = Number(formatUSDT(config.maxStaking, 0).replace(/,/g, ''));
                                 const currentAmount = Number(tier3Amount) || minAmount;
@@ -505,29 +439,17 @@ const RegisterContent: React.FC = () => {
                             })()}
                         </div>
 
-                        {/* Duration Selection */}
-                        <div className="mb-4">
-                            <label className="block text-sm font-bold text-gold-primary mb-2 uppercase tracking-wider">
-                                Duration
-                            </label>
-                            <div className="grid grid-cols-4 gap-2">
-                                {durationOptions.map((duration) => (
-                                    <button
-                                        key={duration.id}
-                                        onClick={() => setSelectedDuration(duration.id)}
-                                        className={`p-2 rounded-lg border-2 transition-all text-center ${selectedDuration === duration.id
-                                            ? 'border-gold-primary bg-gradient-to-br from-gold-primary/30 to-gold-secondary/20 scale-[1.02] shadow-[0_0_20px_rgba(255,215,0,0.5)]'
-                                            : 'border-white/10 bg-black/40 hover:border-gold-primary/40 hover:bg-black/60'
-                                            }`}
-                                    >
-                                        <div className={`text-sm font-bold ${selectedDuration === duration.id ? 'text-gold-primary' : 'text-gray-400'}`}>{duration.days}d</div>
-                                        <div className={`text-xs font-bold ${selectedDuration === duration.id ? 'text-green-400' : 'text-gray-500'}`}>{duration.interest}%</div>
-                                    </button>
-                                ))}
-                            </div>
+                        {/* V2 Staking Info */}
+                        <div className="mb-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                            <div className="text-blue-400 text-sm font-bold mb-2">💡 V2 Staking System</div>
+                            <ul className="text-xs text-gray-400 space-y-1">
+                                <li>• Daily {dailyRoiPercent}% ROI - claim anytime</li>
+                                <li>• No lock period - withdraw capital anytime</li>
+                                <li>• Compound to maximize earnings</li>
+                            </ul>
                         </div>
 
-                        {/* Selected Summary - Compact */}
+                        {/* Selected Summary - V2 */}
                         <div className="bg-gold-primary/10 rounded-lg p-3 mb-4 border border-gold-primary/30">
                             <div className="flex justify-between items-center">
                                 <span className="text-gray-300 text-sm">Staking:</span>
@@ -536,10 +458,10 @@ const RegisterContent: React.FC = () => {
                                 </span>
                             </div>
                             <div className="flex justify-between items-center mt-1">
-                                <span className="text-gray-300 text-sm">Assured Return:</span>
+                                <span className="text-gray-300 text-sm">Daily ROI:</span>
                                 <span className="text-green-400 font-bold">
-                                    +${(Number(formatUSDT(stakeAmountWei).replace(/,/g, '')) * (selectedDurationInfo?.interest || 0) / 100).toFixed(2)} USDT
-                                    <span className="text-xs text-gray-400 ml-1">({selectedDurationInfo?.interest}% in {selectedDurationInfo?.days}d)</span>
+                                    +${(Number(formatUSDT(stakeAmountWei).replace(/,/g, '')) * dailyRoiPercent / 100).toFixed(2)} USDT/day
+                                    <span className="text-xs text-gray-400 ml-1">({dailyRoiPercent}% daily)</span>
                                 </span>
                             </div>
                         </div>
@@ -567,7 +489,7 @@ const RegisterContent: React.FC = () => {
                         {/* Register Button */}
                         <button
                             onClick={handleRegister}
-                            disabled={isPending || isApproving || !referrerId || !isValidReferrer || (selectedTier === 3 && !validateTier3Amount())}
+                            disabled={isPending || isApproving || !referrerId || !isValidReferrer || !validateStakeAmount()}
                             className="w-full py-3 font-black text-base uppercase tracking-wider rounded-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group"
                             style={{
                                 background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',

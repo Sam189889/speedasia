@@ -1,5 +1,5 @@
 "use client";
-import { useReadContract } from "thirdweb/react";
+import { useReadContract } from "wagmi";
 import { useSpeed } from "@/hooks/contracts/useSpeed";
 
 /**
@@ -23,9 +23,8 @@ export function useContractStats() {
     const contract = useSpeed();
 
     const { data, isPending, refetch } = useReadContract({
-        contract,
-        method: "function getContractStats() view returns (uint256 _totalUsers, uint256 _totalStaked, uint256 _totalWithdrawn, uint256 _totalDirectIncome, uint256 _totalLevelIncome, uint256 _totalStakingIncome, uint256 _totalLifetimeRewards, uint256 _contractBalance)",
-        params: [],
+        ...contract,
+        functionName: "getContractStats",
     });
 
     if (!data) {
@@ -61,9 +60,8 @@ export function useFirstUser() {
     const contract = useSpeed();
 
     const { data, isPending, refetch } = useReadContract({
-        contract,
-        method: "function firstUser() view returns (address)",
-        params: [],
+        ...contract,
+        functionName: "firstUser",
     });
 
     return {
@@ -80,9 +78,8 @@ export function useTotalUsersCount() {
     const contract = useSpeed();
 
     const { data, isPending } = useReadContract({
-        contract,
-        method: "function totalUsersCount() view returns (uint256)",
-        params: [],
+        ...contract,
+        functionName: "totalUsersCount",
     });
 
     return {
@@ -99,10 +96,10 @@ export function useUserByIndex(index: number) {
     const contract = useSpeed();
 
     const { data, isPending } = useReadContract({
-        contract,
-        method: "function allUsers(uint256) view returns (address)",
-        params: [BigInt(index)],
-        queryOptions: { enabled: index >= 0 },
+        ...contract,
+        functionName: "allUsers",
+        args: [BigInt(index)],
+        query: { enabled: index >= 0 },
     });
 
     return {
@@ -126,27 +123,36 @@ export function usePartners() {
     const contract = useSpeed();
 
     const { data, isPending, refetch } = useReadContract({
-        contract,
-        method: "function getPartners() view returns (address[], uint256[])",
-        params: [],
+        ...contract,
+        functionName: "getPartners",
     });
 
-    if (!data) {
+    // If still loading and no data, return loading state
+    if (isPending && !data) {
         return {
             partners: [] as Partner[],
-            isLoading: isPending,
+            isLoading: true,
             refetch,
         };
     }
 
-    const partners: Partner[] = data[0].map((address: string, index: number) => ({
-        address,
-        share: data[1][index],
+    // If no data or empty arrays, return empty partners (not loading)
+    if (!data || !data[0] || data[0].length === 0) {
+        return {
+            partners: [] as Partner[],
+            isLoading: false,
+            refetch,
+        };
+    }
+
+    const partners: Partner[] = (data[0] as readonly `0x${string}`[]).map((address, index) => ({
+        address: address as string,
+        share: (data[1] as readonly bigint[])[index],
     }));
 
     return {
         partners,
-        isLoading: isPending,
+        isLoading: false,
         refetch,
     };
 }

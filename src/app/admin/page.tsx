@@ -1,29 +1,26 @@
 'use client';
 
 import { useState } from 'react';
-import { useActiveAccount } from 'thirdweb/react';
+import { useAccount } from 'wagmi';
 import AdminHeader from './components/AdminHeader';
 import AdminBottomNav from './components/AdminBottomNav';
 import OverviewTab from './components/OverviewTab';
 import UsersTab from './components/UsersTab';
 import SettingsTab from './components/SettingsTab';
 import WalletConnect from '@/app/walletConnect/WalletConnect';
-import { ADMIN_ADDRESS } from '@/constants/addresses';
+import { isAdmin as checkIsAdmin } from '@/config/env';
+import { shortenAddress } from '@/hooks/common/formatters';
 
 export default function AdminPage() {
     const [activeTab, setActiveTab] = useState('overview');
 
     // Wallet
-    const activeAccount = useActiveAccount();
-    const userAddress = activeAccount?.address;
+    const { address: userAddress } = useAccount();
 
-    // Check if connected wallet is admin
-    const isAdmin = userAddress?.toLowerCase() === ADMIN_ADDRESS.toLowerCase();
+    // Check if connected wallet is admin (both admins work on both networks)
+    const isAdmin = checkIsAdmin(userAddress);
 
     // Handlers
-    const handleLogout = () => {
-        console.log('Logging out...');
-    };
 
     const renderTabContent = () => {
         switch (activeTab) {
@@ -97,7 +94,7 @@ export default function AdminPage() {
                         {/* Show connected address */}
                         <div className="p-3 bg-black/50 border border-red-500/30 rounded-lg mb-6">
                             <div className="text-xs text-gray-500 mb-1">Connected Wallet</div>
-                            <div className="font-mono text-sm text-white truncate">{userAddress}</div>
+                            <div className="font-mono text-sm text-white">{shortenAddress(userAddress || '')}</div>
                         </div>
 
                         <p className="text-gray-500 text-sm mb-6">Please switch to an admin wallet to continue.</p>

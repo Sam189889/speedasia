@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useActiveAccount } from 'thirdweb/react';
+import { useAccount } from 'wagmi';
 import Link from 'next/link';
 
 // Hooks
@@ -20,8 +20,7 @@ export default function DashboardPage() {
     const [activeTab, setActiveTab] = useState('overview');
 
     // Wallet
-    const activeAccount = useActiveAccount();
-    const userAddress = activeAccount?.address;
+    const { address: userAddress } = useAccount();
 
     // Validation & Registration Check
     const {

@@ -86,31 +86,21 @@ export default function OverviewTab({ userId, onCreateStake, onWithdraw }: Overv
         }
     ];
 
-    // Transform stakes data - include all fields needed for claim & restake
-    // CRITICAL FIX: Contract expects array INDEX (position in userStakes array), NOT stakeId!
-    // We must preserve original index even after filtering active stakes
-    // So we MAP first (to capture originalIndex), then FILTER
-    const activeStakes = dashboard.stakes?.map((stake, originalIndex) => {
-        const daysTotal = Number(stake.duration) / 86400;
-        const now = Date.now() / 1000;
-        const startTime = Number(stake.startTime);
-        const endTime = Number(stake.endTime);
-        const daysLeft = Math.max(0, Math.ceil((endTime - now) / 86400));
-        const progress = Math.min(100, Math.max(0, Math.floor(((now - startTime) / (endTime - startTime)) * 100)));
-
-        return {
-            stakeIndex: originalIndex, // CORRECT: Use original array index, NOT stakeId!
-            amount: stake.amount,
-            interest: stake.interestRate,
-            endTime: endTime,
-            isActive: stake.isActive,
-            isClaimed: stake.isClaimed,
-            plan: `${daysTotal} Days`,
-            interestRate: Number(stake.interestRate) / 100,
-            progress: progress,
-            daysLeft: daysLeft
-        };
-    }).filter(s => s.isActive) || [];
+    // Transform stakes data for V2
+    // V2 stakes: isMigrated === true OR duration === 0
+    const activeStakes = dashboard.stakes?.map((stake, originalIndex) => ({
+        stakeIndex: originalIndex,
+        amount: stake.amount,
+        isActive: stake.isActive,
+        isMigrated: stake.isMigrated || false,
+        duration: stake.duration,
+        lastRoiClaimTime: stake.lastRoiClaimTime || BigInt(0),
+        totalRoiEarned: stake.totalRoiEarned || BigInt(0),
+        boostedRoiPercent: stake.boostedRoiPercent || BigInt(0),
+    })).filter(stake => 
+        // Show only V2 stakes (migrated or new V2 stakes)
+        stake.isActive && (stake.isMigrated || stake.duration === BigInt(0))
+    ) || [];
 
     // Refetch function for after claim
     const handleRefresh = () => {
@@ -172,21 +162,17 @@ export default function OverviewTab({ userId, onCreateStake, onWithdraw }: Overv
 
                 {/* Right Column - Income & Referral */}
                 <div className="space-y-6">
-                    {/* Income Breakdown */}
+                    {/* Income Breakdown (V2: No Direct Income) */}
                     <div className="card-gold p-6 border-4 border-gold-primary/40">
                         <h3 className="text-lg font-black text-gold-primary mb-4 uppercase">Income Breakdown</h3>
                         <div className="space-y-3">
                             <div className="flex justify-between items-center p-3 bg-black/50 rounded-lg border border-gold-primary/20">
-                                <span className="text-gray-400">💵 Direct Income</span>
-                                <span className="text-white font-bold">${formatUSDT(dashboard.incomes?.directIncome || BigInt(0))}</span>
+                                <span className="text-gray-400">� Staking Income</span>
+                                <span className="text-white font-bold">${formatUSDT(dashboard.incomes?.stakingIncome || BigInt(0))}</span>
                             </div>
                             <div className="flex justify-between items-center p-3 bg-black/50 rounded-lg border border-gold-primary/20">
                                 <span className="text-gray-400">📊 Level Income</span>
                                 <span className="text-white font-bold">${formatUSDT(dashboard.incomes?.levelIncome || BigInt(0))}</span>
-                            </div>
-                            <div className="flex justify-between items-center p-3 bg-black/50 rounded-lg border border-gold-primary/20">
-                                <span className="text-gray-400">💎 Staking Income</span>
-                                <span className="text-white font-bold">${formatUSDT(dashboard.incomes?.stakingIncome || BigInt(0))}</span>
                             </div>
                             <div className="flex justify-between items-center p-3 bg-black/50 rounded-lg border border-gold-primary/20">
                                 <span className="text-gray-400">🏆 Lifetime Rewards</span>

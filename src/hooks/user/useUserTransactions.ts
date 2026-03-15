@@ -1,6 +1,5 @@
 "use client";
-import { prepareContractCall } from "thirdweb";
-import { useSendTransaction } from "thirdweb/react";
+import { useWriteContract } from "wagmi";
 import { useInterface } from "@/hooks/contracts/useInterface";
 import { useCallback } from "react";
 
@@ -10,7 +9,7 @@ import { useCallback } from "react";
  */
 export function useUserTransactions() {
   const contract = useInterface();
-  const { mutateAsync: sendTransaction, isPending, error } = useSendTransaction();
+  const { writeContractAsync, isPending, error } = useWriteContract();
 
   /**
    * Register a new user with first stake
@@ -23,13 +22,12 @@ export function useUserTransactions() {
     amount: bigint,
     duration: bigint
   ) => {
-    const transaction = prepareContractCall({
-      contract,
-      method: "function register(bytes5 _referrerId, uint256 _amount, uint256 _duration)",
-      params: [referrerId, amount, duration],
+    return writeContractAsync({
+      ...contract,
+      functionName: "register",
+      args: [referrerId, amount, duration],
     });
-    return sendTransaction(transaction);
-  }, [contract, sendTransaction]);
+  }, [contract, writeContractAsync]);
 
   /**
    * Create a new stake
@@ -42,13 +40,12 @@ export function useUserTransactions() {
     amount: bigint,
     duration: bigint
   ) => {
-    const transaction = prepareContractCall({
-      contract,
-      method: "function stake(bytes5 _userId, uint256 _amount, uint256 _duration)",
-      params: [userId, amount, duration],
+    return writeContractAsync({
+      ...contract,
+      functionName: "stake",
+      args: [userId, amount, duration],
     });
-    return sendTransaction(transaction);
-  }, [contract, sendTransaction]);
+  }, [contract, writeContractAsync]);
 
   /**
    * Claim a completed stake
@@ -59,13 +56,12 @@ export function useUserTransactions() {
     userId: `0x${string}`,
     stakeIndex: bigint
   ) => {
-    const transaction = prepareContractCall({
-      contract,
-      method: "function claimStake(bytes5 _userId, uint256 _stakeIndex)",
-      params: [userId, stakeIndex],
+    return writeContractAsync({
+      ...contract,
+      functionName: "claimStake",
+      args: [userId, stakeIndex],
     });
-    return sendTransaction(transaction);
-  }, [contract, sendTransaction]);
+  }, [contract, writeContractAsync]);
 
   /**
    * Claim lifetime reward
@@ -74,13 +70,12 @@ export function useUserTransactions() {
   const claimLifetimeReward = useCallback(async (
     userId: `0x${string}`
   ) => {
-    const transaction = prepareContractCall({
-      contract,
-      method: "function claimLifetimeReward(bytes5 _userId)",
-      params: [userId],
+    return writeContractAsync({
+      ...contract,
+      functionName: "claimLifetimeReward",
+      args: [userId],
     });
-    return sendTransaction(transaction);
-  }, [contract, sendTransaction]);
+  }, [contract, writeContractAsync]);
 
   /**
    * Withdraw available balance
@@ -91,13 +86,12 @@ export function useUserTransactions() {
     userId: `0x${string}`,
     amount: bigint
   ) => {
-    const transaction = prepareContractCall({
-      contract,
-      method: "function withdraw(bytes5 _userId, uint256 _amount)",
-      params: [userId, amount],
+    return writeContractAsync({
+      ...contract,
+      functionName: "withdraw",
+      args: [userId, amount],
     });
-    return sendTransaction(transaction);
-  }, [contract, sendTransaction]);
+  }, [contract, writeContractAsync]);
 
   /**
    * Claim matured stake and restake in one transaction
@@ -114,13 +108,62 @@ export function useUserTransactions() {
     additionalAmount: bigint,
     duration: bigint
   ) => {
-    const transaction = prepareContractCall({
-      contract,
-      method: "function claimAndRestake(bytes5 _userId, uint256 _stakeIndex, uint256 _restakeAmount, uint256 _additionalAmount, uint256 _duration)",
-      params: [userId, stakeIndex, restakeAmount, additionalAmount, duration],
+    return writeContractAsync({
+      ...contract,
+      functionName: "claimAndRestake",
+      args: [userId, stakeIndex, restakeAmount, additionalAmount, duration],
     });
-    return sendTransaction(transaction);
-  }, [contract, sendTransaction]);
+  }, [contract, writeContractAsync]);
+
+  /**
+   * Claim daily ROI (V2 only)
+   * @param userId - User's userId (bytes5)
+   * @param stakeIndex - Index of the stake to claim ROI from
+   */
+  const claimDailyRoi = useCallback(async (
+    userId: `0x${string}`,
+    stakeIndex: bigint
+  ) => {
+    return writeContractAsync({
+      ...contract,
+      functionName: "claimDailyRoi",
+      args: [userId, stakeIndex],
+    });
+  }, [contract, writeContractAsync]);
+
+  /**
+   * Withdraw capital and close stake (V2 only)
+   * @param userId - User's userId (bytes5)
+   * @param stakeIndex - Index of the stake to withdraw capital from
+   */
+  const withdrawCapital = useCallback(async (
+    userId: `0x${string}`,
+    stakeIndex: bigint
+  ) => {
+    return writeContractAsync({
+      ...contract,
+      functionName: "withdrawCapital",
+      args: [userId, stakeIndex],
+    });
+  }, [contract, writeContractAsync]);
+
+  /**
+   * Claim and compound - close old stake, create new stake with capital + ROI + additional (V2 only)
+   * @param userId - User's userId (bytes5)
+   * @param stakeIndex - Index of the stake to compound
+   * @param additionalAmount - Optional additional USDT from wallet (0 if none)
+   */
+  const claimAndCompound = useCallback(async (
+    userId: `0x${string}`,
+    stakeIndex: bigint,
+    additionalAmount: bigint
+  ) => {
+    return writeContractAsync({
+      ...contract,
+      functionName: "claimAndCompound",
+      args: [userId, stakeIndex, additionalAmount],
+    });
+  }, [contract, writeContractAsync]);
 
   return {
     // Transaction functions
@@ -130,6 +173,11 @@ export function useUserTransactions() {
     claimAndRestake,
     claimLifetimeReward,
     withdraw,
+    
+    // V2 functions
+    claimDailyRoi,
+    withdrawCapital,
+    claimAndCompound,
 
     // State
     isPending,

@@ -59,13 +59,15 @@ export default function EarningsTab({ userId }: EarningsTabProps) {
 
     const { incomes, team } = dashboard;
 
-    // Calculate percentages for progress bars
-    const totalIncome = Number(incomes.totalIncome) || 1;
+    // Calculate percentages for progress bars - convert from wei to dollars first
+    const totalIncomeDollars = Number(incomes.totalIncome / BigInt(1e18)) || 1;
     const getPercentage = (amount: bigint) => {
-        return Math.round((Number(amount) / totalIncome) * 100);
+        const amountDollars = Number(amount / BigInt(1e18));
+        const percentage = (amountDollars / totalIncomeDollars) * 100;
+        return percentage;
     };
 
-    // Earnings breakdown data
+    // Earnings breakdown data (V2: No Direct Income)
     const earningsData = [
         {
             type: 'Staking Income',
@@ -73,13 +75,6 @@ export default function EarningsTab({ userId }: EarningsTabProps) {
             percentage: getPercentage(incomes.stakingIncome),
             icon: '💎',
             color: 'from-blue-500 to-blue-600'
-        },
-        {
-            type: 'Direct Income',
-            amount: incomes.directIncome,
-            percentage: getPercentage(incomes.directIncome),
-            icon: '👥',
-            color: 'from-green-500 to-green-600'
         },
         {
             type: 'Level Income',
@@ -227,10 +222,12 @@ export default function EarningsTab({ userId }: EarningsTabProps) {
                             <div className="relative w-full h-2 bg-white/10 rounded-full overflow-hidden">
                                 <div
                                     className={`h-full bg-gradient-to-r ${item.color} transition-all`}
-                                    style={{ width: `${item.percentage}%` }}
+                                    style={{ width: `${item.amount > BigInt(0) && item.percentage < 2 ? 2 : item.percentage}%` }}
                                 ></div>
                             </div>
-                            <div className="text-xs text-gray-400 mt-1">{item.percentage}% of total</div>
+                            <div className="text-xs text-gray-400 mt-1">
+                                {item.percentage >= 0.01 ? `${item.percentage.toFixed(2)}%` : item.amount > BigInt(0) ? '< 0.01%' : '0%'} of total
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -275,7 +272,16 @@ export default function EarningsTab({ userId }: EarningsTabProps) {
                         const currentBusiness = totalLevelBusiness || team.teamBusinessVolume;
                         const teamProgress = Math.min(100, (currentTeam / teamReq) * 100 || 0);
                         const directProgress = Math.min(100, (Number(team.qualifyingDirectCount) / directReq) * 100 || 0);
-                        const businessProgress = Math.min(100, (Number(currentBusiness) / Number(businessReq)) * 100 || 0);
+                        
+                        // Fix BigInt percentage: Convert to dollars first (divide by 1e18), then calculate percentage
+                        let businessProgress = 0;
+                        if (businessReq > BigInt(0) && currentBusiness > BigInt(0)) {
+                            // Convert from wei to dollars first
+                            const currentDollars = Number(currentBusiness / BigInt(1e18));
+                            const requiredDollars = Number(businessReq / BigInt(1e18));
+                            businessProgress = Math.min(100, (currentDollars / requiredDollars) * 100);
+                        }
+                        
                         const overallProgress = Math.min(100, (teamProgress + directProgress + businessProgress) / 3);
 
                         return (
@@ -346,8 +352,17 @@ export default function EarningsTab({ userId }: EarningsTabProps) {
                                                 ${formatUSDT(currentBusiness, 0)} / ${formatUSDT(businessReq, 0)}
                                             </span>
                                         </div>
-                                        <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                                            <div className="h-full bg-gold-primary transition-all" style={{ width: `${businessProgress}%` }}></div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+                                                <div 
+                                                    className="h-full transition-all rounded-full" 
+                                                    style={{ 
+                                                        width: `${businessProgress > 0 && businessProgress < 2 ? 2 : businessProgress}%`,
+                                                        background: 'linear-gradient(90deg, #FFD700 0%, #FFA500 100%)'
+                                                    }}
+                                                ></div>
+                                            </div>
+                                            <span className="text-xs font-bold text-yellow-400">{businessProgress.toFixed(1)}%</span>
                                         </div>
                                     </div>
                                 )}

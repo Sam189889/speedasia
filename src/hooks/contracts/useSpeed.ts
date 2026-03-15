@@ -1,15 +1,10 @@
-"use client"
-import { getContract } from "thirdweb";
+"use client";
 import { SPEED_ADDRESS } from "@/constants/addresses";
-import { client } from "@/client/client";
-import { chain } from "@/chain/chain";
+import { SpeedAsiaABI } from "@/constants/abis";
 
 export function useSpeed() {
-    const contract = getContract ({
-        client : client,
-        address : SPEED_ADDRESS,
-        chain : chain,
-    });
-
-    return contract;
+    return {
+        address: SPEED_ADDRESS as `0x${string}`,
+        abi: SpeedAsiaABI,
+    };
 }

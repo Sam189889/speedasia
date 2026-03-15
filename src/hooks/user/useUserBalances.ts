@@ -1,40 +1,45 @@
 "use client";
 
-import { useActiveAccount, useWalletBalance } from "thirdweb/react";
-import { client } from "@/client/client";
-import { chain } from "@/chain/chain";
+import { useAccount, useBalance, useReadContract } from "wagmi";
 import { USDT_ADDRESS } from "@/constants/addresses";
+import { formatUnits } from "viem";
+import { erc20Abi } from "viem";
 
 /**
  * Custom hook to manage user wallet balances
  * Provides native token (BNB) and USDT token balances
  */
 export function useUserBalances() {
-  const activeAccount = useActiveAccount();
-  const userAddress = activeAccount?.address;
+  const { address: userAddress } = useAccount();
 
   // Get native token balance (BNB on BSC)
   const { 
     data: nativeBalance, 
     isLoading: isLoadingNativeBalance,
     refetch: refetchNativeBalance 
-  } = useWalletBalance({
-    chain: chain,
+  } = useBalance({
     address: userAddress,
-    client,
   });
 
-  // Get USDT token balance
+  // Get USDT token balance using ERC20 balanceOf
   const { 
-    data: usdtBalance, 
-    isLoading: isLoadingUsdtBalance,
+    data: usdtBalanceRaw, 
+    isPending: isLoadingUsdtBalance,
     refetch: refetchUsdtBalance 
-  } = useWalletBalance({
-    chain: chain,
-    address: userAddress,
-    client,
-    tokenAddress: USDT_ADDRESS,
+  } = useReadContract({
+    address: USDT_ADDRESS,
+    abi: erc20Abi,
+    functionName: "balanceOf",
+    args: [userAddress as `0x${string}`],
+    query: { enabled: !!userAddress },
   });
+
+  // Format USDT balance to match native balance structure
+  const usdtBalance = usdtBalanceRaw !== undefined ? {
+    value: usdtBalanceRaw,
+    decimals: 18,
+    symbol: 'USDT',
+  } : undefined;
 
   // Check if user has enough native balance for gas fees (minimum 0.003 BNB)
   const hasEnoughGas = (): boolean => {
@@ -52,15 +57,17 @@ export function useUserBalances() {
   // Get formatted native balance display
   const getNativeBalanceDisplay = (): string => {
     if (isLoadingNativeBalance) return 'Loading...';
-    if (!nativeBalance?.displayValue) return '0.000';
-    return `${parseFloat(nativeBalance.displayValue).toFixed(3)} ${nativeBalance.symbol}`;
+    if (!nativeBalance?.value) return '0.000';
+    const formatted = formatUnits(nativeBalance.value, nativeBalance.decimals);
+    return `${parseFloat(formatted).toFixed(3)} ${nativeBalance.symbol}`;
   };
 
   // Get formatted USDT balance display
   const getUsdtBalanceDisplay = (): string => {
     if (isLoadingUsdtBalance) return 'Loading...';
-    if (!usdtBalance?.displayValue) return '0.00 USDT';
-    return `${parseFloat(usdtBalance.displayValue).toFixed(2)} ${usdtBalance.symbol}`;
+    if (!usdtBalance?.value) return '0.00 USDT';
+    const formatted = formatUnits(usdtBalance.value, usdtBalance.decimals);
+    return `${parseFloat(formatted).toFixed(2)} ${usdtBalance.symbol}`;
   };
 
   // Refetch all balances

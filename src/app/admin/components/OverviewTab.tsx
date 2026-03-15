@@ -1,7 +1,7 @@
 'use client';
 
 import { useContractStats, usePartners } from '@/hooks/admin/useAdminData';
-import { formatUSDT } from '@/hooks/common/formatters';
+import { formatUSDT, shortenAddress } from '@/hooks/common/formatters';
 import AdminStatsCard from './AdminStatsCard';
 
 export default function OverviewTab() {
@@ -97,8 +97,8 @@ export default function OverviewTab() {
                         {partners.map((partner, index) => (
                             <div key={index} className="flex items-center justify-between p-4 bg-black/50 border border-gold-primary/20 rounded-lg hover:border-gold-primary transition-all">
                                 <div>
-                                    <div className="font-mono text-white text-sm truncate max-w-[200px] sm:max-w-none">
-                                        {partner.address}
+                                    <div className="font-mono text-white text-sm">
+                                        {shortenAddress(partner.address)}
                                     </div>
                                     <div className="text-xs text-gray-400">Partner #{index + 1}</div>
                                 </div>

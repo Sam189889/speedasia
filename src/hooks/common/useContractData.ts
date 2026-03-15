@@ -1,5 +1,5 @@
 "use client";
-import { useReadContract } from "thirdweb/react";
+import { useReadContract } from "wagmi";
 import { useSpeed } from "@/hooks/contracts/useSpeed";
 import { useEffect, useState } from "react";
 
@@ -37,6 +37,9 @@ export interface ContractConfig {
     interestTwo: bigint;
     interestThree: bigint;
     interestFour: bigint;
+
+    // V2 Status
+    isV2Active: boolean;
 }
 
 /**
@@ -59,124 +62,112 @@ export function useContractConfig() {
 
     // Staking Tiers
     const { data: stakingTier1 } = useReadContract({
-        contract,
-        method: "function stakingTier1() view returns (uint256)",
-        params: [],
+        ...contract,
+        functionName: "stakingTier1",
     });
 
     const { data: stakingTier2 } = useReadContract({
-        contract,
-        method: "function stakingTier2() view returns (uint256)",
-        params: [],
+        ...contract,
+        functionName: "stakingTier2",
     });
 
     const { data: stakingTier3Min } = useReadContract({
-        contract,
-        method: "function stakingTier3Min() view returns (uint256)",
-        params: [],
+        ...contract,
+        functionName: "stakingTier3Min",
     });
 
     const { data: maxStaking } = useReadContract({
-        contract,
-        method: "function maxStaking() view returns (uint256)",
-        params: [],
+        ...contract,
+        functionName: "maxStaking",
     });
 
     // Income Config
     const { data: minDirectIncomeStake } = useReadContract({
-        contract,
-        method: "function minDirectIncomeStake() view returns (uint256)",
-        params: [],
+        ...contract,
+        functionName: "minDirectIncomeStake",
     });
 
     const { data: directIncomePercent } = useReadContract({
-        contract,
-        method: "function directIncomePercent() view returns (uint256)",
-        params: [],
+        ...contract,
+        functionName: "directIncomePercent",
     });
 
     // Level Config
     const { data: minStakeForLevelCount } = useReadContract({
-        contract,
-        method: "function minStakeForLevelCount() view returns (uint256)",
-        params: [],
+        ...contract,
+        functionName: "minStakeForLevelCount",
     });
 
     const { data: maxLevels } = useReadContract({
-        contract,
-        method: "function maxLevels() view returns (uint256)",
-        params: [],
+        ...contract,
+        functionName: "maxLevels",
     });
 
     const { data: directBusinessForAllLevels } = useReadContract({
-        contract,
-        method: "function directBusinessForAllLevels() view returns (uint256)",
-        params: [],
+        ...contract,
+        functionName: "directBusinessForAllLevels",
     });
 
     // Withdrawal
     const { data: minWithdrawal } = useReadContract({
-        contract,
-        method: "function minWithdrawal() view returns (uint256)",
-        params: [],
+        ...contract,
+        functionName: "minWithdrawal",
     });
 
     // Staking Durations
     const { data: durationOne } = useReadContract({
-        contract,
-        method: "function durationOne() view returns (uint256)",
-        params: [],
+        ...contract,
+        functionName: "durationOne",
     });
 
     const { data: durationTwo } = useReadContract({
-        contract,
-        method: "function durationTwo() view returns (uint256)",
-        params: [],
+        ...contract,
+        functionName: "durationTwo",
     });
 
     const { data: durationThree } = useReadContract({
-        contract,
-        method: "function durationThree() view returns (uint256)",
-        params: [],
+        ...contract,
+        functionName: "durationThree",
     });
 
     const { data: durationFour } = useReadContract({
-        contract,
-        method: "function durationFour() view returns (uint256)",
-        params: [],
+        ...contract,
+        functionName: "durationFour",
     });
 
     // Interest Rates
     const { data: interestOne } = useReadContract({
-        contract,
-        method: "function interestOne() view returns (uint256)",
-        params: [],
+        ...contract,
+        functionName: "interestOne",
     });
 
     const { data: interestTwo } = useReadContract({
-        contract,
-        method: "function interestTwo() view returns (uint256)",
-        params: [],
+        ...contract,
+        functionName: "interestTwo",
     });
 
     const { data: interestThree } = useReadContract({
-        contract,
-        method: "function interestThree() view returns (uint256)",
-        params: [],
+        ...contract,
+        functionName: "interestThree",
     });
 
     const { data: interestFour } = useReadContract({
-        contract,
-        method: "function interestFour() view returns (uint256)",
-        params: [],
+        ...contract,
+        functionName: "interestFour",
+    });
+
+    // V2 Status
+    const { data: isV2Active } = useReadContract({
+        ...contract,
+        functionName: "isV2Active",
     });
 
     // Level Income Percents (0-19 for levels 1-20) - Using Array.from pattern
     const levelQueries = Array.from({ length: 20 }, (_, i) => {
         const { data } = useReadContract({
-            contract,
-            method: "function levelIncomePercents(uint256) view returns (uint256)",
-            params: [BigInt(i)],
+            ...contract,
+            functionName: "levelIncomePercents",
+            args: [BigInt(i)],
         });
         return data;
     });
@@ -184,9 +175,9 @@ export function useContractConfig() {
     // Lifetime Reward Tiers (0-5 for 6 tiers) - Using Array.from pattern
     const rewardQueries = Array.from({ length: 6 }, (_, i) => {
         const { data } = useReadContract({
-            contract,
-            method: "function lifetimeRewardTiers(uint256) view returns (uint256 teamSize, uint256 directReferrals, uint256 businessVolume, uint256 rewardAmount)",
-            params: [BigInt(i)],
+            ...contract,
+            functionName: "lifetimeRewardTiers",
+            args: [BigInt(i)],
         });
         return data;
     });
@@ -238,6 +229,7 @@ export function useContractConfig() {
                 interestThree,
                 interestFour,
                 levelIncomePercents: levelPercents,
+                isV2Active: isV2Active ?? false,
             });
         }
     }, [
@@ -247,6 +239,7 @@ export function useContractConfig() {
         minWithdrawal,
         durationOne, durationTwo, durationThree, durationFour,
         interestOne, interestTwo, interestThree, interestFour,
+        isV2Active,
         ...levelQueries
     ]);
 
@@ -297,9 +290,8 @@ export function useContractStats() {
     const contract = useSpeed();
 
     const { data, isPending } = useReadContract({
-        contract,
-        method: "function getContractStats() view returns (uint256 _totalUsers, uint256 _totalStaked, uint256 _totalWithdrawn, uint256 _totalDirectIncome, uint256 _totalLevelIncome, uint256 _totalStakingIncome, uint256 _totalLifetimeRewards, uint256 _contractBalance)",
-        params: [],
+        ...contract,
+        functionName: "getContractStats",
     });
 
     if (!data) {
@@ -336,9 +328,8 @@ export function usePartners() {
     const contract = useSpeed();
 
     const { data, isPending } = useReadContract({
-        contract,
-        method: "function getPartners() view returns (address[], uint256[])",
-        params: [],
+        ...contract,
+        functionName: "getPartners",
     });
 
     if (!data) {

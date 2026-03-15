@@ -1,5 +1,5 @@
 "use client";
-import { useReadContract } from "thirdweb/react";
+import { useReadContract } from "wagmi";
 import { useSpeed } from "@/hooks/contracts/useSpeed";
 
 /**
@@ -9,10 +9,10 @@ export function useUserByUserId(userId: `0x${string}` | undefined) {
   const contract = useSpeed();
 
   const { data, isPending } = useReadContract({
-    contract,
-    method: "function getUserByUserId(bytes5 _userId) view returns (address)",
-    params: [userId ?? "0x0000000000"] as const,
-    queryOptions: { enabled: !!userId },
+    ...contract,
+    functionName: "userIdToAddress",
+    args: [userId ?? "0x0000000000"],
+    query: { enabled: !!userId },
   });
 
   return {
@@ -28,10 +28,10 @@ export function useUserIdByAddress(userAddress: string | undefined) {
   const contract = useSpeed();
 
   const { data, isPending } = useReadContract({
-    contract,
-    method: "function getUserIdByAddress(address _user) view returns (bytes5)",
-    params: [userAddress ?? "0x0000000000000000000000000000000000000000"] as const,
-    queryOptions: { enabled: !!userAddress },
+    ...contract,
+    functionName: "addressToUserId",
+    args: [(userAddress ?? "0x0000000000000000000000000000000000000000") as `0x${string}`],
+    query: { enabled: !!userAddress },
   });
 
   return {
@@ -47,10 +47,10 @@ export function useAllLevelsSummary(userId: `0x${string}` | undefined) {
   const contract = useSpeed();
 
   const { data, isPending } = useReadContract({
-    contract,
-    method: "function getAllLevelsSummary(bytes5 _userId) view returns (uint256[20] levelCounts, uint256[20] levelBusiness)",
-    params: [userId ?? "0x0000000000"] as const,
-    queryOptions: { enabled: !!userId },
+    ...contract,
+    functionName: "getAllLevelsSummary",
+    args: [userId ?? "0x0000000000"],
+    query: { enabled: !!userId },
   });
 
   if (!data) {
@@ -75,10 +75,10 @@ export function useLevelUsers(userId: `0x${string}` | undefined, level: number) 
   const contract = useSpeed();
 
   const { data, isPending } = useReadContract({
-    contract,
-    method: "function getLevelUsers(bytes5 _userId, uint256 _level) view returns (bytes5[] userIds, uint256[] staked)",
-    params: [userId ?? "0x0000000000", BigInt(level)] as const,
-    queryOptions: { enabled: !!userId },
+    ...contract,
+    functionName: "getLevelUsers",
+    args: [userId ?? "0x0000000000", BigInt(level)],
+    query: { enabled: !!userId },
   });
 
   if (!data) {
@@ -103,10 +103,10 @@ export function useLifetimeRewardProgress(userId: `0x${string}` | undefined) {
   const contract = useSpeed();
 
   const { data, isPending } = useReadContract({
-    contract,
-    method: "function getLifetimeRewardProgress(bytes5 _userId) view returns (uint256[6] teamSizeRequired, uint256[6] directsRequired, uint256[6] businessRequired, uint256[6] rewardAmounts, bool[6] isClaimed, bool[6] isEligible)",
-    params: [userId ?? "0x0000000000"] as const,
-    queryOptions: { enabled: !!userId },
+    ...contract,
+    functionName: "getLifetimeRewardProgress",
+    args: [userId ?? "0x0000000000"],
+    query: { enabled: !!userId },
   });
 
   if (!data) {

@@ -1,5 +1,5 @@
 "use client";
-import { useReadContract } from "thirdweb/react";
+import { useReadContract } from "wagmi";
 import { useSpeed } from "@/hooks/contracts/useSpeed";
 
 /**
@@ -46,11 +46,13 @@ export interface IncomeData {
 export interface StakingStats {
     totalStaked: bigint;
     activeStakedAmount: bigint;
+    totalClaimed: bigint;
     activeStakesCount: bigint;
+    lastStakeAmount: bigint;
 }
 
 /**
- * Stake interface
+ * Stake interface (V2 compatible)
  */
 export interface Stake {
     stakeId: bigint;
@@ -61,6 +63,10 @@ export interface Stake {
     endTime: bigint;
     isActive: boolean;
     isClaimed: boolean;
+    lastRoiClaimTime: bigint;
+    totalRoiEarned: bigint;
+    isMigrated: boolean;
+    boostedRoiPercent: bigint;
 }
 
 /**
@@ -87,10 +93,10 @@ export function useUserDashboard(userId: `0x${string}` | undefined) {
     const contract = useSpeed();
 
     const { data, isPending, refetch } = useReadContract({
-        contract,
-        method: "function getUserDashboard(bytes5 _userId) view returns ((bytes5 userId, address referrer, uint256 registrationTime, bool isActive) info, (bytes5[] directReferralIds, uint256 directReferralCount, uint256 qualifyingDirectCount, uint256 directBusinessVolume, uint256 qualifyingDirectBusiness, uint256 teamSize, uint256 teamBusinessVolume, uint256 unlockedLevels) team, (uint256 directIncome, uint256 levelIncome, uint256 stakingIncome, uint256 lifetimeRewardIncome, uint256 totalIncome, uint256 availableBalance, uint256 totalWithdrawn, uint256 lastClaimedRewardTier) incomes, (uint256 totalStaked, uint256 activeStakedAmount, uint256 activeStakesCount) stakingStats, (uint256 stakeId, uint256 amount, uint256 duration, uint256 interestRate, uint256 startTime, uint256 endTime, bool isActive, bool isClaimed)[] stakes, uint256 unlockedLevels, bool[20] levelsUnlocked, uint256 nextRewardTier, bool nextRewardEligible, uint256 nextRewardAmount)",
-        params: [userId ?? "0x0000000000"] as const,
-        queryOptions: { enabled: !!userId },
+        ...contract,
+        functionName: "getUserDashboard",
+        args: [userId ?? "0x0000000000"],
+        query: { enabled: !!userId },
     });
 
     if (!data) {
@@ -136,7 +142,9 @@ export function useUserDashboard(userId: `0x${string}` | undefined) {
     const stakingStats: StakingStats = {
         totalStaked: stakingStatsRaw.totalStaked,
         activeStakedAmount: stakingStatsRaw.activeStakedAmount,
+        totalClaimed: stakingStatsRaw.totalClaimed,
         activeStakesCount: stakingStatsRaw.activeStakesCount,
+        lastStakeAmount: stakingStatsRaw.lastStakeAmount,
     };
 
     const stakes: Stake[] = stakesRaw.map((s: {
@@ -148,6 +156,10 @@ export function useUserDashboard(userId: `0x${string}` | undefined) {
         endTime: bigint;
         isActive: boolean;
         isClaimed: boolean;
+        lastRoiClaimTime: bigint;
+        totalRoiEarned: bigint;
+        isMigrated: boolean;
+        boostedRoiPercent: bigint;
     }) => ({
         stakeId: s.stakeId,
         amount: s.amount,
@@ -157,6 +169,10 @@ export function useUserDashboard(userId: `0x${string}` | undefined) {
         endTime: s.endTime,
         isActive: s.isActive,
         isClaimed: s.isClaimed,
+        lastRoiClaimTime: s.lastRoiClaimTime,
+        totalRoiEarned: s.totalRoiEarned,
+        isMigrated: s.isMigrated,
+        boostedRoiPercent: s.boostedRoiPercent,
     }));
 
     const dashboard: UserDashboard = {

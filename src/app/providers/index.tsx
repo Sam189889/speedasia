@@ -1,13 +1,13 @@
 "use client";
 
-import { ThirdwebProvider } from "./ThirdwebProvider";
+import { Web3Provider } from "@/providers/Web3Provider";
 import { ToastProvider } from "./ToastProvider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
     return (
-        <ThirdwebProvider>
+        <Web3Provider>
             {children}
             <ToastProvider />
-        </ThirdwebProvider>
+        </Web3Provider>
     );
 }

@@ -1,8 +1,7 @@
 "use client";
 
-import { allowance, approve } from "thirdweb/extensions/erc20";
-import { useSendTransaction, useActiveAccount, useReadContract } from "thirdweb/react";
-import { toTokens } from "thirdweb/utils";
+import { useReadContract, useWriteContract, useAccount } from "wagmi";
+import { formatUnits, parseUnits } from "viem";
 import { useState } from "react";
 import { useSpeed } from "@/hooks/contracts/useSpeed";
 import { useUsdt } from "@/hooks/contracts/useUsdt";
@@ -13,29 +12,30 @@ import { useInterface } from "@/hooks/contracts/useInterface";
  * Handles approval checks and approval transactions
  */
 export function useTokenApproval() {
-  const activeAccount = useActiveAccount();
+  const { address: activeAccount } = useAccount();
   const gbtContract = useSpeed();
   const intContract = useInterface();
   const usdtContract = useUsdt();
-  const { mutate: sendTransaction, isPending } = useSendTransaction();
+  const { writeContractAsync, isPending } = useWriteContract();
   const [isApproving, setIsApproving] = useState(false);
 
   // Spender address (Interface contract for user transactions)
-  const spenderAddress = intContract?.address;
+  const spenderAddress = intContract.address;
 
   // Check current allowance for Interface contract
   const {
     data: currentAllowance,
     refetch: refetchAllowance,
     isPending: isLoadingAllowance
-  } = useReadContract(
-    allowance,
-    {
-      contract: usdtContract,
-      owner: activeAccount?.address || "0x0000000000000000000000000000000000000000",
-      spender: spenderAddress,
-    }
-  );
+  } = useReadContract({
+    ...usdtContract,
+    functionName: "allowance",
+    args: [
+      (activeAccount || "0x0000000000000000000000000000000000000000") as `0x${string}`,
+      spenderAddress
+    ],
+    query: { enabled: !!activeAccount },
+  });
 
   // Check if approval is needed for a specific amount
   const needsApproval = (requiredAmount: bigint): boolean => {
@@ -70,7 +70,7 @@ export function useTokenApproval() {
     try {
       setIsApproving(true);
 
-      const approvalTokens = toTokens(amount, 18);
+      const approvalTokens = amount; // Already in wei
 
       console.log('=== APPROVAL REQUEST DEBUG ===');
       console.log('Required Amount (Raw):', amount.toString());
@@ -79,26 +79,14 @@ export function useTokenApproval() {
       console.log('Current Allowance:', currentAllowance?.toString());
       console.log('===============================');
 
-      // Prepare approval transaction using thirdweb approve extension
-      const approveTx = approve({
-        contract: usdtContract,
-        spender: spenderAddress,
-        amount: approvalTokens, // Amount in token units
+      // Send approval transaction using wagmi
+      await writeContractAsync({
+        ...usdtContract,
+        functionName: "approve",
+        args: [spenderAddress, approvalTokens],
       });
-
-      // Send approval transaction
-      await new Promise((resolve, reject) => {
-        sendTransaction(approveTx, {
-          onSuccess: (result) => {
-            console.log("✅ Approval successful:", result);
-            resolve(result);
-          },
-          onError: (error) => {
-            console.error("❌ Approval failed:", error);
-            reject(error);
-          },
-        });
-      });
+      
+      console.log("✅ Approval successful");
 
       // Wait for blockchain confirmation
       console.log('⏳ Waiting for blockchain confirmation (2s)...');
@@ -121,7 +109,7 @@ export function useTokenApproval() {
   const getAllowanceDisplay = (): string => {
     if (isLoadingAllowance) return 'Loading...';
     if (!currentAllowance) return '0.00 USDT';
-    const tokens = toTokens(currentAllowance, 18);
+    const tokens = formatUnits(currentAllowance, 18);
     return `${parseFloat(tokens).toFixed(2)} USDT`;
   };
 

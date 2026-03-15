@@ -11,11 +11,15 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "@rainbow-me/rainbowkit": "^2.2.10",
+    "@tanstack/react-query": "^5.90.21",
     "next": "16.0.10",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-hot-toast": "^2.6.0",
-    "thirdweb": "^5.112.4"
+    "thirdweb": "^5.112.4",
+    "viem": "^2.46.3",
+    "wagmi": "^3.5.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.0",
@@ -23,6 +27,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "baseline-browser-mapping": "^2.9.11",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

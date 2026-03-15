@@ -1,10 +1,7 @@
-import { toTokens, toWei, shortenAddress, isAddress, fromGwei, hexToString, stringToHex } from "thirdweb/utils";
-import { getGasPrice } from "thirdweb";
-import { client } from "@/client/client";
-import { chain } from "@/chain/chain";
+import { formatUnits, parseUnits, isAddress, hexToString, stringToHex } from "viem";
 
 /**
- * Format BigInt USDT value to readable string using ThirdWeb's toTokens
+ * Format BigInt USDT value to readable string using viem's formatUnits
  * @param value - BigInt value in wei (18 decimals)
  * @param decimals - Number of decimal places to show
  * @returns Formatted string like "1,234.56"
@@ -12,8 +9,8 @@ import { chain } from "@/chain/chain";
 export function formatUSDT(value: bigint, decimals: number = 2): string {
     if (!value) return '0';
 
-    // Use ThirdWeb's toTokens to convert wei to tokens
-    const tokenValue = toTokens(value, 18);
+    // Use viem's formatUnits to convert wei to tokens
+    const tokenValue = formatUnits(value, 18);
     const numValue = parseFloat(tokenValue);
 
     // Format with specified decimals and thousands separator
@@ -33,13 +30,13 @@ export function formatNumber(num: number): string {
 }
 
 /**
- * Format BigInt USDT with dollar sign and thousands separator using ThirdWeb's toTokens
+ * Format BigInt USDT with dollar sign and thousands separator using viem's formatUnits
  * @param value - BigInt value in wei
  * @returns Formatted string like "$1,234,567.89"
  */
 export function formatUSDTShort(value: bigint): string {
-    // Use ThirdWeb's toTokens to convert wei to tokens
-    const tokenValue = toTokens(value, 18);
+    // Use viem's formatUnits to convert wei to tokens
+    const tokenValue = formatUnits(value, 18);
     const numValue = parseFloat(tokenValue);
 
     return `$${numValue.toLocaleString('en-US', {
@@ -63,20 +60,26 @@ export function estimateDailyTransactions(totalUsers: number): number {
  * @returns BigInt value in wei
  */
 export function usdtToWei(amount: string): bigint {
-    return toWei(amount);
+    return parseUnits(amount, 18);
 }
 
 /**
- * Shorten wallet address using ThirdWeb's shortenAddress
- * @param address - Full wallet address
- * @returns Shortened address like "0xA0Cf...251e"
+ * Shorten an Ethereum address for display
+ * @param address - Full Ethereum address
+ * @returns Shortened address like "0x1234...5678"
  */
-export function formatAddress(address: string): string {
-    return shortenAddress(address);
+export function shortenAddress(address: string): string {
+    if (!address) return '';
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
 /**
- * Validate if a string is a valid Ethereum address using ThirdWeb's isAddress
+ * Alias for shortenAddress
+ */
+export const formatAddress = shortenAddress;
+
+/**
+ * Validate if a string is a valid Ethereum address using viem's isAddress
  * @param address - Address string to validate
  * @returns Boolean indicating if address is valid
  */
@@ -164,15 +167,6 @@ export function formatRelativeTime(date: Date | number): string {
 }
 
 /**
- * Get current gas price from the blockchain
- * @returns Gas price in wei (BigInt)
- */
-export async function getCurrentGasPrice(): Promise<bigint> {
-    const gasPrice = await getGasPrice({ client, chain });
-    return gasPrice;
-}
-
-/**
  * Format gas price to Gwei
  * @param gasPriceWei - Gas price in wei
  * @returns Formatted gas price string like "25.5 Gwei"
@@ -188,7 +182,7 @@ export function formatGasPrice(gasPriceWei: bigint): string {
  * @returns BigInt value in wei
  */
 export function gweiToWei(gwei: string): bigint {
-    return fromGwei(gwei);
+    return parseUnits(gwei, 9); // Gwei is 9 decimals
 }
 
 /**
@@ -199,7 +193,7 @@ export function gweiToWei(gwei: string): bigint {
  */
 export function estimateTransactionCost(gasPrice: bigint, gasLimit: number = 21000): string {
     const costInWei = gasPrice * BigInt(gasLimit);
-    const costInEth = toTokens(costInWei, 18);
+    const costInEth = formatUnits(costInWei, 18);
     return `${parseFloat(costInEth).toFixed(6)} ETH`;
 }
 

@@ -7,7 +7,7 @@ import { useContractStats, usePartners, useFirstUser } from '@/hooks/admin/useAd
 import { useAdminTransactions } from '@/hooks/admin/useAdminTransactions';
 import { formatUSDT, usdtToWei } from '@/hooks/common/formatters';
 
-type EditMode = 'durations' | 'interests' | 'tiers' | 'direct' | 'level' | 'withdrawal' | 'partners' | 'firstUser' | 'levelPercents' | 'lifetimeRewards' | null;
+type EditMode = 'level' | 'withdrawal' | 'partners' | 'firstUser' | 'levelPercents' | 'lifetimeRewards' | null;
 
 export default function SettingsTab() {
     const { config, lifetimeRewards, isLoading: configLoading } = useContractConfig();
@@ -15,10 +15,6 @@ export default function SettingsTab() {
     const { partners, isLoading: partnersLoading, refetch: refetchPartners } = usePartners();
     const { firstUser, isLoading: firstUserLoading, refetch: refetchFirstUser } = useFirstUser();
     const {
-        setDurations,
-        setInterestRates,
-        setStakingTiers,
-        setDirectIncomeConfig,
         setLevelUnlockConfig,
         setMinWithdrawal,
         setPartners,
@@ -26,16 +22,14 @@ export default function SettingsTab() {
         setLevelIncomePercents,
         setLifetimeRewardTier,
         emergencyWithdraw,
+        initializeV2,
+        bulkMigrateAllStakes,
         isPending
     } = useAdminTransactions();
 
     const [editMode, setEditMode] = useState<EditMode>(null);
 
     // Form states
-    const [durations, setDurationsState] = useState({ d1: '', d2: '', d3: '', d4: '' });
-    const [interests, setInterests] = useState({ r1: '', r2: '', r3: '', r4: '' });
-    const [tiers, setTiers] = useState({ t1: '', t2: '', t3min: '', max: '' });
-    const [directConfig, setDirectConfig] = useState({ percent: '', minStake: '' });
     const [levelConfig, setLevelConfig] = useState({ minStake: '', businessForAll: '' });
     const [minWithdrawalAmount, setMinWithdrawalAmount] = useState('');
     const [emergencyAmount, setEmergencyAmount] = useState('');
@@ -49,32 +43,13 @@ export default function SettingsTab() {
     const [rewardTiers, setRewardTiers] = useState<{ teamSize: string; directReferrals: string; businessVolume: string; rewardAmount: string }[]>(
         Array(6).fill({ teamSize: '', directReferrals: '', businessVolume: '', rewardAmount: '' })
     );
+    // V2 Migration state
+    const [migrationStart, setMigrationStart] = useState('0');
+    const [migrationEnd, setMigrationEnd] = useState('100');
 
     // Load current values into form when entering edit mode
     const loadFormValues = () => {
         if (!config) return;
-        setDurationsState({
-            d1: String(Number(config.durationOne) / 86400),
-            d2: String(Number(config.durationTwo) / 86400),
-            d3: String(Number(config.durationThree) / 86400),
-            d4: String(Number(config.durationFour) / 86400)
-        });
-        setInterests({
-            r1: String(Number(config.interestOne) / 100),
-            r2: String(Number(config.interestTwo) / 100),
-            r3: String(Number(config.interestThree) / 100),
-            r4: String(Number(config.interestFour) / 100)
-        });
-        setTiers({
-            t1: formatUSDT(config.stakingTier1, 0).replace(/,/g, ''),
-            t2: formatUSDT(config.stakingTier2, 0).replace(/,/g, ''),
-            t3min: formatUSDT(config.stakingTier3Min, 0).replace(/,/g, ''),
-            max: formatUSDT(config.maxStaking, 0).replace(/,/g, '')
-        });
-        setDirectConfig({
-            percent: String(Number(config.directIncomePercent) / 100),
-            minStake: formatUSDT(config.minDirectIncomeStake, 0).replace(/,/g, '')
-        });
         setLevelConfig({
             minStake: formatUSDT(config.minStakeForLevelCount, 0).replace(/,/g, ''),
             businessForAll: formatUSDT(config.directBusinessForAllLevels, 0).replace(/,/g, '')
@@ -97,68 +72,6 @@ export default function SettingsTab() {
     };
 
     // Update handlers
-    const handleUpdateDurations = async () => {
-        try {
-            toast.loading('Updating durations...', { id: 'durations' });
-            await setDurations(
-                BigInt(Math.round(parseFloat(durations.d1) * 86400)),
-                BigInt(Math.round(parseFloat(durations.d2) * 86400)),
-                BigInt(Math.round(parseFloat(durations.d3) * 86400)),
-                BigInt(Math.round(parseFloat(durations.d4) * 86400))
-            );
-            toast.success('Durations updated!', { id: 'durations' });
-            setEditMode(null);
-        } catch (error) {
-            toast.error('Failed to update', { id: 'durations' });
-        }
-    };
-
-    const handleUpdateInterests = async () => {
-        try {
-            toast.loading('Updating interest rates...', { id: 'interests' });
-            await setInterestRates(
-                BigInt(Math.round(parseFloat(interests.r1) * 100)),
-                BigInt(Math.round(parseFloat(interests.r2) * 100)),
-                BigInt(Math.round(parseFloat(interests.r3) * 100)),
-                BigInt(Math.round(parseFloat(interests.r4) * 100))
-            );
-            toast.success('Interest rates updated!', { id: 'interests' });
-            setEditMode(null);
-        } catch (error) {
-            toast.error('Failed to update', { id: 'interests' });
-        }
-    };
-
-    const handleUpdateTiers = async () => {
-        try {
-            toast.loading('Updating staking tiers...', { id: 'tiers' });
-            await setStakingTiers(
-                usdtToWei(tiers.t1),
-                usdtToWei(tiers.t2),
-                usdtToWei(tiers.t3min),
-                usdtToWei(tiers.max)
-            );
-            toast.success('Staking tiers updated!', { id: 'tiers' });
-            setEditMode(null);
-        } catch (error) {
-            toast.error('Failed to update', { id: 'tiers' });
-        }
-    };
-
-    const handleUpdateDirectConfig = async () => {
-        try {
-            toast.loading('Updating...', { id: 'direct' });
-            await setDirectIncomeConfig(
-                BigInt(Math.round(parseFloat(directConfig.percent) * 100)),
-                usdtToWei(directConfig.minStake)
-            );
-            toast.success('Updated!', { id: 'direct' });
-            setEditMode(null);
-        } catch (error) {
-            toast.error('Failed to update', { id: 'direct' });
-        }
-    };
-
     const handleUpdateLevelConfig = async () => {
         try {
             toast.loading('Updating...', { id: 'level' });
@@ -289,6 +202,37 @@ export default function SettingsTab() {
         }
     };
 
+    const handleInitializeV2 = async () => {
+        if (!confirm('⚠️ Initialize V2? This can only be done ONCE and will activate the V2 system!')) return;
+        try {
+            toast.loading('Initializing V2...', { id: 'initV2' });
+            await initializeV2();
+            toast.success('V2 Activated! 🎉', { id: 'initV2' });
+        } catch (error) {
+            toast.error('Failed to initialize V2', { id: 'initV2' });
+        }
+    };
+
+    const handleBulkMigration = async () => {
+        const start = parseInt(migrationStart);
+        const end = parseInt(migrationEnd);
+        
+        if (isNaN(start) || isNaN(end) || start >= end) {
+            toast.error('Invalid range! Start must be less than End.');
+            return;
+        }
+        
+        if (!confirm(`⚠️ Migrate stakes for users ${start} to ${end - 1}? This will process ${end - start} users.`)) return;
+        
+        try {
+            toast.loading(`Migrating users ${start}-${end - 1}...`, { id: 'bulkMigrate' });
+            await bulkMigrateAllStakes(BigInt(start), BigInt(end));
+            toast.success(`Migration complete! (${start}-${end - 1})`, { id: 'bulkMigrate' });
+        } catch (error) {
+            toast.error('Migration failed', { id: 'bulkMigrate' });
+        }
+    };
+
     const handleUpdateLifetimeRewardTier = async (tierIndex: number) => {
         try {
             const tier = rewardTiers[tierIndex];
@@ -340,116 +284,92 @@ export default function SettingsTab() {
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
-            {/* Staking Durations */}
-            <SettingsCard
-                title="⏱️ Staking Durations"
-                isEditing={editMode === 'durations'}
-                onEdit={() => handleEdit('durations')}
-                onCancel={handleCancel}
-                onSave={handleUpdateDurations}
-                isPending={isPending}
-            >
-                {editMode === 'durations' ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        {(['d1', 'd2', 'd3', 'd4'] as const).map((key, i) => (
-                            <EditInput
-                                key={key}
-                                label={`Duration ${i + 1}`}
-                                value={durations[key]}
-                                onChange={(v) => setDurationsState({ ...durations, [key]: v })}
-                                suffix="days"
-                            />
-                        ))}
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        <ValueDisplay label="Duration 1" value={`${Number(config.durationOne) / 86400} Days`} />
-                        <ValueDisplay label="Duration 2" value={`${Number(config.durationTwo) / 86400} Days`} />
-                        <ValueDisplay label="Duration 3" value={`${Number(config.durationThree) / 86400} Days`} />
-                        <ValueDisplay label="Duration 4" value={`${Number(config.durationFour) / 86400} Days`} />
-                    </div>
-                )}
-            </SettingsCard>
+            {/* V2 Migration */}
+            <div className="card-gold p-6 border-4 border-gold-primary/40">
+                <h2 className="text-xl font-black text-gold-primary mb-6 uppercase">🚀 V2 Migration</h2>
+                
+                <div className="space-y-6">
+                    {/* Initialize V2 - Only show if V2 not active yet */}
+                    {!config?.isV2Active && (
+                        <div className="p-4 bg-black/30 border border-gold-primary/20 rounded-lg">
+                            <h3 className="text-lg font-bold text-white mb-3">1️⃣ Initialize V2 System</h3>
+                            <p className="text-sm text-gray-400 mb-4">
+                                ⚠️ <strong>Run this FIRST!</strong> Activates V2 features (daily ROI, booster, new withdrawal fee). Can only be called ONCE!
+                            </p>
+                            <button
+                                onClick={handleInitializeV2}
+                                disabled={isPending}
+                                className="px-6 py-3 rounded-lg font-bold text-black transition-all hover:scale-105 disabled:opacity-50"
+                                style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}
+                            >
+                                {isPending ? 'Initializing...' : '🚀 Initialize V2'}
+                            </button>
+                        </div>
+                    )}
 
-            {/* Interest Rates */}
-            <SettingsCard
-                title="📈 Interest Rates"
-                isEditing={editMode === 'interests'}
-                onEdit={() => handleEdit('interests')}
-                onCancel={handleCancel}
-                onSave={handleUpdateInterests}
-                isPending={isPending}
-            >
-                {editMode === 'interests' ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        {(['r1', 'r2', 'r3', 'r4'] as const).map((key, i) => (
-                            <EditInput
-                                key={key}
-                                label={`Rate ${i + 1}`}
-                                value={interests[key]}
-                                onChange={(v) => setInterests({ ...interests, [key]: v })}
-                                suffix="%"
-                                step="0.1"
-                            />
-                        ))}
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        <ValueDisplay label="Rate 1" value={`${Number(config.interestOne) / 100}%`} highlight />
-                        <ValueDisplay label="Rate 2" value={`${Number(config.interestTwo) / 100}%`} highlight />
-                        <ValueDisplay label="Rate 3" value={`${Number(config.interestThree) / 100}%`} highlight />
-                        <ValueDisplay label="Rate 4" value={`${Number(config.interestFour) / 100}%`} highlight />
-                    </div>
-                )}
-            </SettingsCard>
+                    {/* V2 Active Status */}
+                    {config?.isV2Active && (
+                        <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+                            <h3 className="text-lg font-bold text-green-400 mb-2">✅ V2 System Active</h3>
+                            <p className="text-sm text-gray-400">
+                                V2 features are enabled: Daily ROI, Booster Income, Progressive Staking, Withdraw Capital
+                            </p>
+                        </div>
+                    )}
 
-            {/* Staking Tiers */}
-            <SettingsCard
-                title="💰 Staking Tiers"
-                isEditing={editMode === 'tiers'}
-                onEdit={() => handleEdit('tiers')}
-                onCancel={handleCancel}
-                onSave={handleUpdateTiers}
-                isPending={isPending}
-            >
-                {editMode === 'tiers' ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        <EditInput label="Tier 1" value={tiers.t1} onChange={(v) => setTiers({ ...tiers, t1: v })} prefix="$" />
-                        <EditInput label="Tier 2" value={tiers.t2} onChange={(v) => setTiers({ ...tiers, t2: v })} prefix="$" />
-                        <EditInput label="Tier 3 Min" value={tiers.t3min} onChange={(v) => setTiers({ ...tiers, t3min: v })} prefix="$" />
-                        <EditInput label="Maximum" value={tiers.max} onChange={(v) => setTiers({ ...tiers, max: v })} prefix="$" />
+                    {/* Bulk Migration */}
+                    <div className="p-4 bg-black/30 border border-gold-primary/20 rounded-lg">
+                        <h3 className="text-lg font-bold text-white mb-3">2️⃣ Bulk Migrate V1 Stakes</h3>
+                        <p className="text-sm text-gray-400 mb-4">
+                            Migrate all V1 stakes to V2 system in batches. Total users: <span className="text-gold-primary font-bold">{stats?.totalUsers || 0}</span>
+                        </p>
+                        
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label className="text-xs text-gray-400 mb-1 block">Start Index</label>
+                                <input
+                                    type="number"
+                                    value={migrationStart}
+                                    onChange={(e) => setMigrationStart(e.target.value)}
+                                    className="w-full px-4 py-2 bg-black/50 border border-gold-primary/30 rounded-lg text-white focus:border-gold-primary outline-none"
+                                    placeholder="0"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs text-gray-400 mb-1 block">End Index</label>
+                                <input
+                                    type="number"
+                                    value={migrationEnd}
+                                    onChange={(e) => setMigrationEnd(e.target.value)}
+                                    className="w-full px-4 py-2 bg-black/50 border border-gold-primary/30 rounded-lg text-white focus:border-gold-primary outline-none"
+                                    placeholder="100"
+                                />
+                            </div>
+                        </div>
+                        
+                        <div className="flex gap-3">
+                            <button
+                                onClick={handleBulkMigration}
+                                disabled={isPending}
+                                className="px-6 py-3 rounded-lg font-bold text-black transition-all hover:scale-105 disabled:opacity-50"
+                                style={{ background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' }}
+                            >
+                                {isPending ? 'Migrating...' : '🔄 Migrate Batch'}
+                            </button>
+                            <button
+                                onClick={() => { setMigrationStart('0'); setMigrationEnd(String(stats?.totalUsers || 100)); }}
+                                className="px-4 py-3 rounded-lg font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30 hover:bg-blue-500/30 transition-all"
+                            >
+                                📊 Use All Users
+                            </button>
+                        </div>
+                        
+                        <div className="mt-3 text-xs text-gray-500">
+                            💡 Tip: Migrate in batches of 50-100 to avoid gas limits. Example: 0-100, 100-200, etc.
+                        </div>
                     </div>
-                ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        <ValueDisplay label="Tier 1" value={`$${formatUSDT(config.stakingTier1, 0)}`} />
-                        <ValueDisplay label="Tier 2" value={`$${formatUSDT(config.stakingTier2, 0)}`} />
-                        <ValueDisplay label="Tier 3 Min" value={`$${formatUSDT(config.stakingTier3Min, 0)}`} />
-                        <ValueDisplay label="Maximum" value={`$${formatUSDT(config.maxStaking, 0)}`} highlight />
-                    </div>
-                )}
-            </SettingsCard>
-
-            {/* Direct Income Config */}
-            <SettingsCard
-                title="👥 Direct Income Config"
-                isEditing={editMode === 'direct'}
-                onEdit={() => handleEdit('direct')}
-                onCancel={handleCancel}
-                onSave={handleUpdateDirectConfig}
-                isPending={isPending}
-            >
-                {editMode === 'direct' ? (
-                    <div className="grid grid-cols-2 gap-4">
-                        <EditInput label="Direct Income %" value={directConfig.percent} onChange={(v) => setDirectConfig({ ...directConfig, percent: v })} suffix="%" step="0.1" />
-                        <EditInput label="Min Stake Required" value={directConfig.minStake} onChange={(v) => setDirectConfig({ ...directConfig, minStake: v })} prefix="$" />
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-2 gap-4">
-                        <ValueDisplay label="Direct Income" value={`${Number(config.directIncomePercent) / 100}%`} highlight />
-                        <ValueDisplay label="Min Stake Required" value={`$${formatUSDT(config.minDirectIncomeStake, 0)}`} />
-                    </div>
-                )}
-            </SettingsCard>
+                </div>
+            </div>
 
             {/* Level Unlock Config */}
             <SettingsCard
@@ -528,7 +448,6 @@ export default function SettingsTab() {
             <div className={`card-gold p-6 border-4 border-gold-primary/40 transition-all`}>
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-black text-gold-primary uppercase">👥 Partners</h2>
-                    {/* Edit button hidden for now
                     {editMode === 'partners' ? (
                         <div className="flex gap-2">
                             <button
@@ -555,7 +474,7 @@ export default function SettingsTab() {
                             ✏️ Edit
                         </button>
                     )}
-                    */}
+                    
                 </div>
 
                 {editMode === 'partners' ? (
