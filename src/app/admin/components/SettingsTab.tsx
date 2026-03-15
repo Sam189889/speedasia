@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useContractConfig } from '@/hooks/common/useContractData';
-import { useContractStats, usePartners, useFirstUser } from '@/hooks/admin/useAdminData';
+import { useContractStats, usePartners, useFirstUser, useTotalStakesMigrated } from '@/hooks/admin/useAdminData';
 import { useAdminTransactions } from '@/hooks/admin/useAdminTransactions';
 import { formatUSDT, usdtToWei } from '@/hooks/common/formatters';
 
@@ -14,6 +14,7 @@ export default function SettingsTab() {
     const { stats } = useContractStats();
     const { partners, isLoading: partnersLoading, refetch: refetchPartners } = usePartners();
     const { firstUser, isLoading: firstUserLoading, refetch: refetchFirstUser } = useFirstUser();
+    const { totalStakesMigrated } = useTotalStakesMigrated();
     const {
         setLevelUnlockConfig,
         setMinWithdrawal,
@@ -317,57 +318,69 @@ export default function SettingsTab() {
                         </div>
                     )}
 
-                    {/* Bulk Migration */}
-                    <div className="p-4 bg-black/30 border border-gold-primary/20 rounded-lg">
-                        <h3 className="text-lg font-bold text-white mb-3">2️⃣ Bulk Migrate V1 Stakes</h3>
-                        <p className="text-sm text-gray-400 mb-4">
-                            Migrate all V1 stakes to V2 system in batches. Total users: <span className="text-gold-primary font-bold">{stats?.totalUsers || 0}</span>
-                        </p>
-                        
-                        <div className="grid grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label className="text-xs text-gray-400 mb-1 block">Start Index</label>
-                                <input
-                                    type="number"
-                                    value={migrationStart}
-                                    onChange={(e) => setMigrationStart(e.target.value)}
-                                    className="w-full px-4 py-2 bg-black/50 border border-gold-primary/30 rounded-lg text-white focus:border-gold-primary outline-none"
-                                    placeholder="0"
-                                />
+                    {/* Bulk Migration - Show only if stakes exist and not all migrated */}
+                    {totalStakesMigrated === BigInt(0) && (
+                        <div className="p-4 bg-black/30 border border-gold-primary/20 rounded-lg">
+                            <h3 className="text-lg font-bold text-white mb-3">2️⃣ Bulk Migrate V1 Stakes</h3>
+                            <p className="text-sm text-gray-400 mb-4">
+                                Migrate all V1 stakes to V2 system in batches. Total users: <span className="text-gold-primary font-bold">{stats?.totalUsers || 0}</span>
+                            </p>
+                            
+                            <div className="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label className="text-xs text-gray-400 mb-1 block">Start Index</label>
+                                    <input
+                                        type="number"
+                                        value={migrationStart}
+                                        onChange={(e) => setMigrationStart(e.target.value)}
+                                        className="w-full px-4 py-2 bg-black/50 border border-gold-primary/30 rounded-lg text-white focus:border-gold-primary outline-none"
+                                        placeholder="0"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs text-gray-400 mb-1 block">End Index</label>
+                                    <input
+                                        type="number"
+                                        value={migrationEnd}
+                                        onChange={(e) => setMigrationEnd(e.target.value)}
+                                        className="w-full px-4 py-2 bg-black/50 border border-gold-primary/30 rounded-lg text-white focus:border-gold-primary outline-none"
+                                        placeholder="100"
+                                    />
+                                </div>
                             </div>
-                            <div>
-                                <label className="text-xs text-gray-400 mb-1 block">End Index</label>
-                                <input
-                                    type="number"
-                                    value={migrationEnd}
-                                    onChange={(e) => setMigrationEnd(e.target.value)}
-                                    className="w-full px-4 py-2 bg-black/50 border border-gold-primary/30 rounded-lg text-white focus:border-gold-primary outline-none"
-                                    placeholder="100"
-                                />
+                            
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={handleBulkMigration}
+                                    disabled={isPending}
+                                    className="px-6 py-3 rounded-lg font-bold text-black transition-all hover:scale-105 disabled:opacity-50"
+                                    style={{ background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' }}
+                                >
+                                    {isPending ? 'Migrating...' : '🔄 Migrate Batch'}
+                                </button>
+                                <button
+                                    onClick={() => { setMigrationStart('0'); setMigrationEnd(String(stats?.totalUsers || 100)); }}
+                                    className="px-4 py-3 rounded-lg font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30 hover:bg-blue-500/30 transition-all"
+                                >
+                                    📊 Use All Users
+                                </button>
+                            </div>
+                            
+                            <div className="mt-3 text-xs text-gray-500">
+                                💡 Tip: Migrate in batches of 50-100 to avoid gas limits. Example: 0-100, 100-200, etc.
                             </div>
                         </div>
-                        
-                        <div className="flex gap-3">
-                            <button
-                                onClick={handleBulkMigration}
-                                disabled={isPending}
-                                className="px-6 py-3 rounded-lg font-bold text-black transition-all hover:scale-105 disabled:opacity-50"
-                                style={{ background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' }}
-                            >
-                                {isPending ? 'Migrating...' : '🔄 Migrate Batch'}
-                            </button>
-                            <button
-                                onClick={() => { setMigrationStart('0'); setMigrationEnd(String(stats?.totalUsers || 100)); }}
-                                className="px-4 py-3 rounded-lg font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30 hover:bg-blue-500/30 transition-all"
-                            >
-                                📊 Use All Users
-                            </button>
+                    )}
+                    
+                    {/* Migration Complete Status */}
+                    {totalStakesMigrated > BigInt(0) && (
+                        <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+                            <h3 className="text-lg font-bold text-green-400 mb-2">✅ Migration Complete</h3>
+                            <p className="text-sm text-gray-400">
+                                Successfully migrated <span className="text-green-400 font-bold">{totalStakesMigrated.toString()}</span> V1 stakes to V2 system.
+                            </p>
                         </div>
-                        
-                        <div className="mt-3 text-xs text-gray-500">
-                            💡 Tip: Migrate in batches of 50-100 to avoid gas limits. Example: 0-100, 100-200, etc.
-                        </div>
-                    </div>
+                    )}
                 </div>
             </div>
 

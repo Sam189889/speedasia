@@ -89,6 +89,24 @@ export function useTotalUsersCount() {
 }
 
 /**
+ * Hook to get total stakes migrated to V2
+ */
+export function useTotalStakesMigrated() {
+    const contract = useSpeed();
+
+    const { data, isPending, refetch } = useReadContract({
+        ...contract,
+        functionName: "totalStakesMigrated",
+    });
+
+    return {
+        totalStakesMigrated: data ?? BigInt(0),
+        isLoading: isPending,
+        refetch,
+    };
+}
+
+/**
  * Hook to get user address by index (for pagination)
  * @param index - User index in allUsers array
  */
