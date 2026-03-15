@@ -9,7 +9,7 @@ export default function TypesOfIncome() {
       border: "border-green-500/40 hover:border-green-400"
     },
     {
-      title: "BOOSTER INCOME",
+      title: "SPEED INCOME",
       icon: "🚀",
       desc: "Get 1.5% daily ROI when you qualify (0.5% extra)",
       highlight: "1.5% Daily",

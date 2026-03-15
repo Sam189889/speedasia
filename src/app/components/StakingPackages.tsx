@@ -39,7 +39,7 @@ export default function StakingPackages() {
               <div className="p-4 bg-black/50 rounded-xl border border-gold-primary/20">
                 <div className="flex items-center gap-3 mb-2">
                   <span className="text-2xl">🚀</span>
-                  <span className="text-white font-bold">Booster Eligible</span>
+                  <span className="text-white font-bold">Speed Eligible</span>
                 </div>
                 <p className="text-gray-400 text-sm">Qualify for 1.5% daily ROI</p>
               </div>

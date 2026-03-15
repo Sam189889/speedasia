@@ -459,7 +459,7 @@ export default function ActiveStakesV2({ stakes, userId, onCreateStake, onRefres
                                             </span>
                                             {isBoosted && (
                                                 <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs font-bold rounded animate-pulse">
-                                                    🚀 BOOSTED
+                                                    🚀 SPEED BOOST
                                                 </span>
                                             )}
                                         </div>
@@ -469,11 +469,11 @@ export default function ActiveStakesV2({ stakes, userId, onCreateStake, onRefres
                                     </div>
                                 </div>
 
-                                {/* Booster Progress (only for current stake that can get booster) */}
+                                {/* Speed Progress (only for current stake that can get Speed bonus) */}
                                 {boosterData && boosterData[5] && Number(boosterData[4]) === stake.stakeIndex && !isBoosted && (
                                     <div className="mb-4 p-3 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-lg">
                                         <div className="flex justify-between items-center mb-2">
-                                            <span className="text-xs font-bold text-purple-400">🎯 Booster Progress</span>
+                                            <span className="text-xs font-bold text-purple-400">🎯 Speed Progress</span>
                                             <span className="text-xs font-black text-pink-400">
                                                 {formatCountdown(Number(boosterData[6]))}
                                             </span>
@@ -494,7 +494,7 @@ export default function ActiveStakesV2({ stakes, userId, onCreateStake, onRefres
                                 )}
                                 {boosterData && !boosterData[5] && Number(boosterData[4]) === stake.stakeIndex && !isBoosted && (
                                     <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
-                                        <p className="text-xs text-red-400 font-bold">⏰ Booster window expired</p>
+                                        <p className="text-xs text-red-400 font-bold">⏰ Speed window expired</p>
                                     </div>
                                 )}
 

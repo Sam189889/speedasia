@@ -32,7 +32,7 @@ export default function StakingIncome() {
               <h3 className="text-gold-primary font-black text-4xl mb-3">Daily Returns</h3>
               <p className="text-gray-300 text-lg mb-8">
                 Earn <span className="text-gold-primary font-bold">1% per day</span> on your staked amount.
-                With booster active, earn up to <span className="text-green-400 font-bold">1.5% daily</span>!
+                With Speed active, earn up to <span className="text-green-400 font-bold">1.5% daily</span>!
               </p>
 
               {/* Example Calculation */}

@@ -9,7 +9,7 @@ import Benefits from "@/app/components/Benefits";
 import TypesOfIncome from "@/app/components/TypesOfIncome";
 import StakingPackages from "@/app/components/StakingPackages";
 import StakingIncome from "@/app/components/StakingIncome";
-import BoosterIncome from "@/app/components/BoosterIncome";
+import SpeedIncome from "@/app/components/SpeedIncome";
 import LevelIncome from "@/app/components/LevelIncome";
 import LifetimeRewards from "@/app/components/LifetimeRewards";
 import BottomNav from "@/app/components/BottomNav";
@@ -30,7 +30,7 @@ export default function Home() {
         <TypesOfIncome />
         <StakingPackages />
         <StakingIncome />
-        <BoosterIncome />
+        <SpeedIncome />
         <LevelIncome />
         <LifetimeRewards />
       </main>
