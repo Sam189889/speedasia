@@ -448,20 +448,20 @@ export default function ActiveStakesV2({ stakes, userId, onCreateStake, onRefres
                         const dailyRate = isBoosted ? '1.5%' : '1%';
 
                         return (
-                            <div key={stake.stakeIndex} className="p-5 bg-black/50 border-2 border-gold-primary/30 rounded-lg hover:border-gold-primary transition-all">
+                            <div key={stake.stakeIndex} className="p-4 sm:p-5 bg-black/50 border-2 border-gold-primary/30 rounded-lg hover:border-gold-primary transition-all">
                                 {/* Header */}
-                                <div className="flex justify-between items-start mb-4">
+                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
                                     <div className="flex gap-2 items-center flex-wrap">
-                                        <span className="px-2 py-0.5 bg-gold-primary/20 text-gold-primary text-xs font-bold rounded">
+                                        <span className="px-2 py-0.5 bg-gold-primary/20 text-gold-primary text-xs font-bold rounded whitespace-nowrap">
                                             {dailyRate} Daily ROI
                                         </span>
                                         {isBoosted && (
-                                            <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs font-bold rounded animate-pulse">
+                                            <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs font-bold rounded animate-pulse whitespace-nowrap">
                                                 🚀 SPEED BOOST
                                             </span>
                                         )}
                                     </div>
-                                    <div className="text-right">
+                                    <div className="text-left sm:text-right">
                                         <div className="text-xs text-gray-400">Stake #{stake.stakeIndex}</div>
                                     </div>
                                 </div>
@@ -484,7 +484,7 @@ export default function ActiveStakesV2({ stakes, userId, onCreateStake, onRefres
                                             </div>
                                             <span className="text-xs font-bold text-white">{Number(boosterData[2])}/2</span>
                                         </div>
-                                        <p className="text-xs text-gray-400">
+                                        <p className="text-xs text-gray-400 break-words">
                                             Bring 2 referrals (${formatUSDT(boosterData[3])}+) to boost ROI to 1.5%!
                                         </p>
                                     </div>
@@ -496,18 +496,18 @@ export default function ActiveStakesV2({ stakes, userId, onCreateStake, onRefres
                                 )}
 
                                 {/* Stats Grid - Principal & ROI Separate */}
-                                <div className="grid grid-cols-3 gap-3 mb-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                                     <div className="p-3 bg-gradient-to-br from-gold-primary/20 to-gold-primary/5 rounded-lg border border-gold-primary/30">
                                         <div className="text-xs text-gray-400 mb-1">💰 Principal</div>
-                                        <div className="text-lg font-black text-gold-primary">${formatUSDT(stake.amount)}</div>
+                                        <div className="text-base sm:text-lg font-black text-gold-primary break-all">${formatUSDT(stake.amount)}</div>
                                     </div>
                                     <div className="p-3 bg-gradient-to-br from-green-500/20 to-green-500/5 rounded-lg border border-green-500/30">
                                         <div className="text-xs text-gray-400 mb-1">✅ Total ROI</div>
-                                        <div className="text-lg font-black text-green-400">${formatUSDT(stake.totalRoiEarned)}</div>
+                                        <div className="text-base sm:text-lg font-black text-green-400 break-all">${formatUSDT(stake.totalRoiEarned)}</div>
                                     </div>
                                     <div className="p-3 bg-gradient-to-br from-blue-500/20 to-blue-500/5 rounded-lg border border-blue-500/30">
                                         <div className="text-xs text-gray-400 mb-1">⏳ Pending</div>
-                                        <div className="text-lg font-black text-blue-400">${formatUSDT(pendingRoi)}</div>
+                                        <div className="text-base sm:text-lg font-black text-blue-400 break-all">${formatUSDT(pendingRoi)}</div>
                                         <div className="text-xs text-gray-500">{daysPending} days</div>
                                     </div>
                                 </div>
@@ -518,22 +518,22 @@ export default function ActiveStakesV2({ stakes, userId, onCreateStake, onRefres
                                 </div>
 
                                 {/* Action Buttons */}
-                                <div className="grid grid-cols-3 gap-2">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                     <button
                                         onClick={() => setClaimStake(stake)}
                                         disabled={pendingRoi === BigInt(0)}
-                                        className="py-3 font-black uppercase rounded-lg transition-all hover:scale-105 disabled:opacity-50 text-black text-xs"
+                                        className="py-3 font-black uppercase rounded-lg transition-all hover:scale-105 disabled:opacity-50 text-black text-xs sm:text-xs whitespace-nowrap"
                                         style={{
                                             background: pendingRoi > BigInt(0) 
                                                 ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
                                                 : 'linear-gradient(135deg, #6B7280 0%, #4B5563 100%)'
                                         }}
                                     >
-                                        💰 Claim
+                                        💰 Claim ROI
                                     </button>
                                     <button
                                         onClick={() => setCompoundStake(stake)}
-                                        className="py-3 font-black uppercase rounded-lg transition-all hover:scale-105 text-black text-xs"
+                                        className="py-3 font-black uppercase rounded-lg transition-all hover:scale-105 text-black text-xs sm:text-xs whitespace-nowrap"
                                         style={{
                                             background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)'
                                         }}
@@ -542,7 +542,7 @@ export default function ActiveStakesV2({ stakes, userId, onCreateStake, onRefres
                                     </button>
                                     <button
                                         onClick={() => setUnstakeStake(stake)}
-                                        className="py-3 font-black uppercase rounded-lg transition-all hover:scale-105 text-black text-xs"
+                                        className="py-3 font-black uppercase rounded-lg transition-all hover:scale-105 text-black text-xs sm:text-xs whitespace-nowrap"
                                         style={{
                                             background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)'
                                         }}
