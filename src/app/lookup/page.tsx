@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { encodeUserId } from '@/hooks/common/formatters';
 import OverviewTab from '@/app/dashboard/components/OverviewTab';
@@ -8,7 +8,7 @@ import TeamTab from '@/app/dashboard/components/TeamTab';
 import EarningsTab from '@/app/dashboard/components/EarningsTab';
 import StakeTab from '@/app/dashboard/components/StakeTab';
 
-export default function UserLookupPage() {
+function LookupContent() {
     const searchParams = useSearchParams();
     const urlUserId = searchParams.get('user');
     
@@ -151,5 +151,20 @@ export default function UserLookupPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+export default function UserLookupPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
+                <div className="text-center">
+                    <div className="w-16 h-16 border-4 border-gold-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-gold-primary font-bold">Loading...</p>
+                </div>
+            </div>
+        }>
+            <LookupContent />
+        </Suspense>
     );
 }
