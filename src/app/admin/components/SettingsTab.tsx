@@ -23,15 +23,13 @@ export default function SettingsTab() {
         setLevelIncomePercents,
         setLifetimeRewardTier,
         emergencyWithdraw,
-        initializeV2,
-        bulkMigrateAllStakes,
         isPending
     } = useAdminTransactions();
 
     const [editMode, setEditMode] = useState<EditMode>(null);
 
     // Form states
-    const [levelConfig, setLevelConfig] = useState({ minStake: '', businessForAll: '' });
+    const [levelConfig, setLevelConfig] = useState({ minStake: '', businessForAll: '', levelsPerDirect: '' });
     const [minWithdrawalAmount, setMinWithdrawalAmount] = useState('');
     const [emergencyAmount, setEmergencyAmount] = useState('');
     // Partners state
@@ -53,7 +51,8 @@ export default function SettingsTab() {
         if (!config) return;
         setLevelConfig({
             minStake: formatUSDT(config.minStakeForLevelCount, 0).replace(/,/g, ''),
-            businessForAll: formatUSDT(config.directBusinessForAllLevels, 0).replace(/,/g, '')
+            businessForAll: formatUSDT(config.directBusinessForAllLevels, 0).replace(/,/g, ''),
+            levelsPerDirect: config.levelsPerDirect.toString()
         });
         setMinWithdrawalAmount(formatUSDT(config.minWithdrawal, 0).replace(/,/g, ''));
     };
@@ -76,13 +75,25 @@ export default function SettingsTab() {
     const handleUpdateLevelConfig = async () => {
         try {
             toast.loading('Updating...', { id: 'level' });
+            
+            // Handle businessForAll - if empty or 0, use max uint256 to disable
+            let businessForAll: bigint;
+            if (!levelConfig.businessForAll || levelConfig.businessForAll === '0') {
+                businessForAll = BigInt('115792089237316195423570985008687907853269984665640564039457584007913129639935');
+            } else {
+                // Convert to wei (multiply by 1e18)
+                businessForAll = BigInt(levelConfig.businessForAll) * BigInt(10 ** 18);
+            }
+            
             await setLevelUnlockConfig(
                 usdtToWei(levelConfig.minStake),
-                usdtToWei(levelConfig.businessForAll)
+                businessForAll,
+                BigInt(levelConfig.levelsPerDirect || 0)
             );
             toast.success('Updated!', { id: 'level' });
             setEditMode(null);
         } catch (error) {
+            console.error('Update error:', error);
             toast.error('Failed to update', { id: 'level' });
         }
     };
@@ -203,36 +214,6 @@ export default function SettingsTab() {
         }
     };
 
-    const handleInitializeV2 = async () => {
-        if (!confirm('⚠️ Initialize V2? This can only be done ONCE and will activate the V2 system!')) return;
-        try {
-            toast.loading('Initializing V2...', { id: 'initV2' });
-            await initializeV2();
-            toast.success('V2 Activated! 🎉', { id: 'initV2' });
-        } catch (error) {
-            toast.error('Failed to initialize V2', { id: 'initV2' });
-        }
-    };
-
-    const handleBulkMigration = async () => {
-        const start = parseInt(migrationStart);
-        const end = parseInt(migrationEnd);
-        
-        if (isNaN(start) || isNaN(end) || start >= end) {
-            toast.error('Invalid range! Start must be less than End.');
-            return;
-        }
-        
-        if (!confirm(`⚠️ Migrate stakes for users ${start} to ${end - 1}? This will process ${end - start} users.`)) return;
-        
-        try {
-            toast.loading(`Migrating users ${start}-${end - 1}...`, { id: 'bulkMigrate' });
-            await bulkMigrateAllStakes(BigInt(start), BigInt(end));
-            toast.success(`Migration complete! (${start}-${end - 1})`, { id: 'bulkMigrate' });
-        } catch (error) {
-            toast.error('Migration failed', { id: 'bulkMigrate' });
-        }
-    };
 
     const handleUpdateLifetimeRewardTier = async (tierIndex: number) => {
         try {
@@ -297,14 +278,14 @@ export default function SettingsTab() {
                             <p className="text-sm text-gray-400 mb-4">
                                 ⚠️ <strong>Run this FIRST!</strong> Activates V2 features (daily ROI, booster, new withdrawal fee). Can only be called ONCE!
                             </p>
-                            <button
+                            {/* <button
                                 onClick={handleInitializeV2}
                                 disabled={isPending}
                                 className="px-6 py-3 rounded-lg font-bold text-black transition-all hover:scale-105 disabled:opacity-50"
                                 style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}
                             >
                                 {isPending ? 'Initializing...' : '🚀 Initialize V2'}
-                            </button>
+                            </button> */}
                         </div>
                     )}
 
@@ -350,14 +331,14 @@ export default function SettingsTab() {
                             </div>
                             
                             <div className="flex gap-3">
-                                <button
+                                {/* <button
                                     onClick={handleBulkMigration}
                                     disabled={isPending}
                                     className="px-6 py-3 rounded-lg font-bold text-black transition-all hover:scale-105 disabled:opacity-50"
                                     style={{ background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' }}
                                 >
                                     {isPending ? 'Migrating...' : '🔄 Migrate Batch'}
-                                </button>
+                                </button> */}
                                 <button
                                     onClick={() => { setMigrationStart('0'); setMigrationEnd(String(stats?.totalUsers || 100)); }}
                                     className="px-4 py-3 rounded-lg font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30 hover:bg-blue-500/30 transition-all"
@@ -395,13 +376,13 @@ export default function SettingsTab() {
             >
                 {editMode === 'level' ? (
                     <div className="grid grid-cols-2 gap-4">
-                        <EditInput label="Min Stake per Level" value={levelConfig.minStake} onChange={(v) => setLevelConfig({ ...levelConfig, minStake: v })} prefix="$" />
-                        <EditInput label="Business for All Levels" value={levelConfig.businessForAll} onChange={(v) => setLevelConfig({ ...levelConfig, businessForAll: v })} prefix="$" />
+                        <EditInput label="Min Stake ($100+)" value={levelConfig.minStake} onChange={(v) => setLevelConfig({ ...levelConfig, minStake: v })} prefix="$" />
+                        <EditInput label="Levels per Direct" value={levelConfig.levelsPerDirect} onChange={(v) => setLevelConfig({ ...levelConfig, levelsPerDirect: v })} />
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 gap-4">
-                        <ValueDisplay label="Min Stake per Level" value={`$${formatUSDT(config.minStakeForLevelCount, 0)}`} />
-                        <ValueDisplay label="Business for All Levels" value={`$${formatUSDT(config.directBusinessForAllLevels, 0)}`} highlight />
+                        <ValueDisplay label="Min Stake ($100+)" value={`$${formatUSDT(config.minStakeForLevelCount, 0)}`} />
+                        <ValueDisplay label="Levels per Direct" value={config.levelsPerDirect.toString()} highlight />
                     </div>
                 )}
             </SettingsCard>

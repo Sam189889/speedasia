@@ -117,24 +117,6 @@ export const SpeedAsiaABI = [
   },
   {
     "type": "function",
-    "name": "bulkMigrateAllStakes",
-    "inputs": [
-      {
-        "name": "_startIndex",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "_endIndex",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
     "name": "claimAndCompound",
     "inputs": [
       {
@@ -215,24 +197,6 @@ export const SpeedAsiaABI = [
         "name": "_userId",
         "type": "bytes5",
         "internalType": "bytes5"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "claimStake",
-    "inputs": [
-      {
-        "name": "_userId",
-        "type": "bytes5",
-        "internalType": "bytes5"
-      },
-      {
-        "name": "_stakeIndex",
-        "type": "uint256",
-        "internalType": "uint256"
       }
     ],
     "outputs": [],
@@ -504,6 +468,35 @@ export const SpeedAsiaABI = [
         "name": "",
         "type": "uint256",
         "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getLegsBreakdown",
+    "inputs": [
+      {
+        "name": "_userId",
+        "type": "bytes5",
+        "internalType": "bytes5"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "strongestLeg",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "otherLegsSum",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "legVolumes",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
       }
     ],
     "stateMutability": "view"
@@ -916,13 +909,6 @@ export const SpeedAsiaABI = [
   },
   {
     "type": "function",
-    "name": "initializeV2",
-    "inputs": [],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
     "name": "interestFour",
     "inputs": [],
     "outputs": [
@@ -1015,6 +1001,19 @@ export const SpeedAsiaABI = [
         "internalType": "uint256"
       }
     ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "levelsPerDirect",
+    "inputs": [],
     "outputs": [
       {
         "name": "",
@@ -1351,6 +1350,11 @@ export const SpeedAsiaABI = [
       },
       {
         "name": "_businessForAll",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "_levelsPerDirect",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -2230,31 +2234,6 @@ export const SpeedAsiaABI = [
   },
   {
     "type": "event",
-    "name": "StakeMigrated",
-    "inputs": [
-      {
-        "name": "user",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "stakeIndex",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      },
-      {
-        "name": "accumulatedRoi",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
     "name": "Staked",
     "inputs": [
       {
@@ -2300,19 +2279,6 @@ export const SpeedAsiaABI = [
         "indexed": true,
         "internalType": "address"
       },
-      {
-        "name": "timestamp",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "V2Activated",
-    "inputs": [
       {
         "name": "timestamp",
         "type": "uint256",
@@ -2374,11 +2340,6 @@ export const SpeedAsiaABI = [
   {
     "type": "error",
     "name": "InvalidDuration",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "InvalidInput",
     "inputs": []
   },
   {
@@ -2510,11 +2471,6 @@ export const SpeedAsiaABI = [
   {
     "type": "error",
     "name": "UserNotRegistered",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "V2AlreadyActive",
     "inputs": []
   },
   {

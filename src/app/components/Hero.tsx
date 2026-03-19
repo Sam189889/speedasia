@@ -78,7 +78,7 @@ export default function Hero() {
 
         {/* Animated Description */}
         <p className="text-xl sm:text-2xl md:text-3xl text-gray-300 mb-8 max-w-3xl mx-auto font-bold leading-relaxed animate-fade-in-up delay-300">
-          Earn up to <span className="text-green-400 font-black">25% Returns</span> through{' '}
+          Earn up to <span className="text-green-400 font-black">45% Returns</span> through{' '}
           <span className="text-gold-primary font-black">Smart Contract Staking</span>
         </p>
 
@@ -120,7 +120,7 @@ export default function Hero() {
         {/* Animated Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto animate-fade-in-up delay-500">
           {[
-            { label: 'Max Returns', value: '25%', icon: '💰', color: 'text-green-400' },
+            { label: 'Max Returns', value: '45%', icon: '💰', color: 'text-green-400' },
             { label: 'Referral Bonus', value: '3%', icon: '👥', color: 'text-blue-400' },
             { label: 'Level Income', value: '20 Levels', icon: '📈', color: 'text-purple-400' },
             { label: 'Lifetime Rewards', value: '$25K+', icon: '🏆', color: 'text-gold-primary' }

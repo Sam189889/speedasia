@@ -72,15 +72,17 @@ export function useAdminTransactions() {
      * Set level unlock configuration
      * @param minStake - Minimum stake to unlock one level
      * @param businessForAll - Business volume to unlock all levels
+     * @param levelsPerDirect - Number of levels unlocked per qualifying direct
      */
     const setLevelUnlockConfig = useCallback(async (
         minStake: bigint,
-        businessForAll: bigint
+        businessForAll: bigint,
+        levelsPerDirect: bigint
     ) => {
         return writeContractAsync({
             ...contract,
             functionName: "setLevelUnlockConfig",
-            args: [minStake, businessForAll],
+            args: [minStake, businessForAll, levelsPerDirect],
         });
     }, [contract, writeContractAsync]);
 
@@ -199,43 +201,7 @@ export function useAdminTransactions() {
         });
     }, [contract, writeContractAsync]);
 
-    /**
-     * Initialize V2 features (one-time activation)
-     */
-    const initializeV2 = useCallback(async () => {
-        return writeContractAsync({
-            ...contract,
-            functionName: "initializeV2",
-        });
-    }, [contract, writeContractAsync]);
-
-    /**
-     * Bulk migrate all V1 stakes for a single user
-     * @param userId - User's 5-character ID
-     */
-    const bulkMigrateUserStakes = useCallback(async (userId: string) => {
-        return writeContractAsync({
-            ...contract,
-            functionName: "bulkMigrateUserStakes",
-            args: [userId as `0x${string}`],
-        });
-    }, [contract, writeContractAsync]);
-
-    /**
-     * Bulk migrate ALL users' V1 stakes in batches
-     * @param startIndex - Start user index
-     * @param endIndex - End user index (exclusive)
-     */
-    const bulkMigrateAllStakes = useCallback(async (
-        startIndex: bigint,
-        endIndex: bigint
-    ) => {
-        return writeContractAsync({
-            ...contract,
-            functionName: "bulkMigrateAllStakes",
-            args: [startIndex, endIndex],
-        });
-    }, [contract, writeContractAsync]);
+    
 
     return {
         // Config setters
@@ -254,11 +220,6 @@ export function useAdminTransactions() {
 
         // Emergency
         emergencyWithdraw,
-
-        // V2 Migration
-        initializeV2,
-        bulkMigrateUserStakes,
-        bulkMigrateAllStakes,
 
         // State
         isPending,

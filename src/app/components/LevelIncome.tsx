@@ -76,23 +76,13 @@ export default function LevelIncome() {
             <h3 className="text-purple-400 font-black text-lg uppercase mb-4 flex items-center gap-2">
               <span className="text-2xl">🔓</span> How to Unlock Levels
             </h3>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="p-4 bg-black/40 rounded-xl border border-purple-500/20">
-                <div className="flex items-start gap-3">
-                  <div className="text-2xl">1️⃣</div>
-                  <div>
-                    <div className="text-white font-bold mb-1">Per Referral Method</div>
-                    <div className="text-gray-400 text-sm">Each $20+ direct referral unlocks 1 level</div>
-                  </div>
-                </div>
-              </div>
-              <div className="p-4 bg-black/40 rounded-xl border border-purple-500/20">
-                <div className="flex items-start gap-3">
-                  <div className="text-2xl">2️⃣</div>
-                  <div>
-                    <div className="text-white font-bold mb-1">Business Volume Method</div>
-                    <div className="text-gray-400 text-sm">$2,000 total direct business = All 20 levels</div>
-                  </div>
+            <div className="p-4 bg-black/40 rounded-xl border border-purple-500/20">
+              <div className="flex items-start gap-3">
+                <div className="text-3xl">🎯</div>
+                <div>
+                  <div className="text-white font-bold mb-2">Unlock Rule</div>
+                  <div className="text-gray-400 text-sm mb-1">Each $100+ direct referral unlocks <span className="text-gold-primary font-bold">2 levels</span></div>
+                  <div className="text-gold-primary text-sm font-bold">10 directs of $100+ = All 20 levels unlocked! 🚀</div>
                 </div>
               </div>
             </div>

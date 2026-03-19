@@ -21,6 +21,7 @@ export interface ContractConfig {
     minStakeForLevelCount: bigint;
     maxLevels: bigint;
     directBusinessForAllLevels: bigint;
+    levelsPerDirect: bigint;
     levelIncomePercents: bigint[];
 
     // Withdrawal
@@ -106,6 +107,11 @@ export function useContractConfig() {
     const { data: directBusinessForAllLevels } = useReadContract({
         ...contract,
         functionName: "directBusinessForAllLevels",
+    });
+
+    const { data: levelsPerDirect } = useReadContract({
+        ...contract,
+        functionName: "levelsPerDirect",
     });
 
     // Withdrawal
@@ -196,6 +202,7 @@ export function useContractConfig() {
             minStakeForLevelCount !== undefined &&
             maxLevels !== undefined &&
             directBusinessForAllLevels !== undefined &&
+            levelsPerDirect !== undefined &&
             minWithdrawal !== undefined &&
             durationOne !== undefined &&
             durationTwo !== undefined &&
@@ -219,6 +226,7 @@ export function useContractConfig() {
                 minStakeForLevelCount,
                 maxLevels,
                 directBusinessForAllLevels,
+                levelsPerDirect,
                 minWithdrawal,
                 durationOne,
                 durationTwo,
@@ -235,7 +243,7 @@ export function useContractConfig() {
     }, [
         stakingTier1, stakingTier2, stakingTier3Min, maxStaking,
         minDirectIncomeStake, directIncomePercent,
-        minStakeForLevelCount, maxLevels, directBusinessForAllLevels,
+        minStakeForLevelCount, maxLevels, directBusinessForAllLevels, levelsPerDirect,
         minWithdrawal,
         durationOne, durationTwo, durationThree, durationFour,
         interestOne, interestTwo, interestThree, interestFour,

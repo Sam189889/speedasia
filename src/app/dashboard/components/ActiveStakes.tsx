@@ -451,18 +451,15 @@ export default function ActiveStakesV2({ stakes, userId, onCreateStake, onRefres
                             <div key={stake.stakeIndex} className="p-5 bg-black/50 border-2 border-gold-primary/30 rounded-lg hover:border-gold-primary transition-all">
                                 {/* Header */}
                                 <div className="flex justify-between items-start mb-4">
-                                    <div>
-                                        <div className="text-2xl font-black text-white mb-1">${formatUSDT(stake.amount)}</div>
-                                        <div className="flex gap-2 items-center flex-wrap">
-                                            <span className="px-2 py-0.5 bg-gold-primary/20 text-gold-primary text-xs font-bold rounded">
-                                                {dailyRate} Daily ROI
+                                    <div className="flex gap-2 items-center flex-wrap">
+                                        <span className="px-2 py-0.5 bg-gold-primary/20 text-gold-primary text-xs font-bold rounded">
+                                            {dailyRate} Daily ROI
+                                        </span>
+                                        {isBoosted && (
+                                            <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs font-bold rounded animate-pulse">
+                                                🚀 SPEED BOOST
                                             </span>
-                                            {isBoosted && (
-                                                <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs font-bold rounded animate-pulse">
-                                                    🚀 SPEED BOOST
-                                                </span>
-                                            )}
-                                        </div>
+                                        )}
                                     </div>
                                     <div className="text-right">
                                         <div className="text-xs text-gray-400">Stake #{stake.stakeIndex}</div>
@@ -498,14 +495,18 @@ export default function ActiveStakesV2({ stakes, userId, onCreateStake, onRefres
                                     </div>
                                 )}
 
-                                {/* Stats Grid */}
-                                <div className="grid grid-cols-2 gap-3 mb-4">
-                                    <div className="p-3 bg-black/60 rounded-lg border border-white/10">
-                                        <div className="text-xs text-gray-400 mb-1">Total ROI Earned</div>
+                                {/* Stats Grid - Principal & ROI Separate */}
+                                <div className="grid grid-cols-3 gap-3 mb-4">
+                                    <div className="p-3 bg-gradient-to-br from-gold-primary/20 to-gold-primary/5 rounded-lg border border-gold-primary/30">
+                                        <div className="text-xs text-gray-400 mb-1">💰 Principal</div>
+                                        <div className="text-lg font-black text-gold-primary">${formatUSDT(stake.amount)}</div>
+                                    </div>
+                                    <div className="p-3 bg-gradient-to-br from-green-500/20 to-green-500/5 rounded-lg border border-green-500/30">
+                                        <div className="text-xs text-gray-400 mb-1">✅ Total ROI</div>
                                         <div className="text-lg font-black text-green-400">${formatUSDT(stake.totalRoiEarned)}</div>
                                     </div>
-                                    <div className="p-3 bg-black/60 rounded-lg border border-white/10">
-                                        <div className="text-xs text-gray-400 mb-1">Pending ROI</div>
+                                    <div className="p-3 bg-gradient-to-br from-blue-500/20 to-blue-500/5 rounded-lg border border-blue-500/30">
+                                        <div className="text-xs text-gray-400 mb-1">⏳ Pending</div>
                                         <div className="text-lg font-black text-blue-400">${formatUSDT(pendingRoi)}</div>
                                         <div className="text-xs text-gray-500">{daysPending} days</div>
                                     </div>

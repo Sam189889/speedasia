@@ -6,6 +6,7 @@ import { useUserDashboard } from '@/hooks/user/useUserDashboard';
 import { useLifetimeRewardProgress, useAllLevelsSummary } from '@/hooks/user/useUserData';
 import { useUserTransactions } from '@/hooks/user/useUserTransactions';
 import { useUserBalances } from '@/hooks/user/useUserBalances';
+import { useLegsBreakdown } from '@/hooks/user/useLegsBreakdown';
 import { formatUSDT, usdtToWei } from '@/hooks/common/formatters';
 
 interface EarningsTabProps {
@@ -18,6 +19,7 @@ export default function EarningsTab({ userId }: EarningsTabProps) {
 
     const { dashboard, isLoading } = useUserDashboard(userId);
     const { levelCounts, levelBusiness } = useAllLevelsSummary(userId);
+    const { strongestLeg, otherLegsSum, legVolumes, totalLegs, isLoading: legsLoading } = useLegsBreakdown(userId);
 
     // Calculate totals from levels (same as TeamTab) - only if we have level data
     const totalLevelUsers = levelCounts.length > 0 ? levelCounts.reduce((sum, count) => sum + Number(count), 0) : 0;
@@ -250,7 +252,7 @@ export default function EarningsTab({ userId }: EarningsTabProps) {
                     </div>
                     <div className="text-center border-x border-white/10">
                         <div className="text-lg font-black text-green-400">{Number(team.qualifyingDirectCount)}</div>
-                        <div className="text-[10px] text-gray-400 uppercase">Directs ($20+)</div>
+                        <div className="text-[10px] text-gray-400 uppercase">Directs ($100+)</div>
                     </div>
                     <div className="text-center">
                         <div className="text-lg font-black text-blue-400">${formatUSDT(totalLevelBusiness || team.teamBusinessVolume, 0)}</div>
@@ -334,9 +336,9 @@ export default function EarningsTab({ userId }: EarningsTabProps) {
                                             <div className="h-full bg-blue-500 transition-all" style={{ width: `${teamProgress}%` }}></div>
                                         </div>
 
-                                        {/* Directs ($20+) */}
+                                        {/* Directs ($100+) */}
                                         <div className="flex items-center justify-between text-xs">
-                                            <span className="text-gray-400">Direct Referrals ($20+)</span>
+                                            <span className="text-gray-400">Direct Referrals ($100+)</span>
                                             <span className={Number(team.qualifyingDirectCount) >= directReq ? 'text-green-400' : 'text-gray-500'}>
                                                 {Number(team.qualifyingDirectCount)} / {directReq}
                                             </span>
@@ -370,6 +372,88 @@ export default function EarningsTab({ userId }: EarningsTabProps) {
                         );
                     })}
                 </div>
+
+                {/* Leg Breakdown Card - For Lifetime Rewards Matching */}
+                {totalLegs > 0 && (
+                    <div className="mt-6 p-6 border-4 border-purple-500/40 bg-gradient-to-br from-purple-500/10 to-transparent rounded-xl">
+                        <div className="mb-6">
+                            <h3 className="text-xl font-black text-purple-400 uppercase mb-2">⚖️ Leg Business Breakdown</h3>
+                            <p className="text-sm text-gray-400">50-50 Matching: Strongest Leg + All Other Legs</p>
+                        </div>
+
+                        {/* Main Stats Grid */}
+                        <div className="grid md:grid-cols-2 gap-4 mb-6">
+                            {/* Strongest Leg */}
+                            <div className="p-4 bg-gradient-to-br from-gold-primary/20 to-transparent border-2 border-gold-primary/40 rounded-xl">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="w-10 h-10 rounded-full bg-gold-primary/20 flex items-center justify-center text-xl">
+                                        🏆
+                                    </div>
+                                    <div>
+                                        <div className="text-xs text-gray-400 uppercase">Strongest Leg (A)</div>
+                                        <div className="text-2xl font-black text-gold-primary">
+                                            ${formatUSDT(strongestLeg, 0)}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="text-xs text-gray-500">Your highest performing direct's team volume</div>
+                            </div>
+
+                            {/* Other Legs Sum */}
+                            <div className="p-4 bg-gradient-to-br from-blue-500/20 to-transparent border-2 border-blue-500/40 rounded-xl">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-xl">
+                                        👥
+                                    </div>
+                                    <div>
+                                        <div className="text-xs text-gray-400 uppercase">Other Legs (B)</div>
+                                        <div className="text-2xl font-black text-blue-400">
+                                            ${formatUSDT(otherLegsSum, 0)}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="text-xs text-gray-500">Combined volume of all other directs</div>
+                            </div>
+                        </div>
+
+                        {/* Individual Legs */}
+                        {legVolumes.length > 0 && (
+                            <div className="space-y-2">
+                                <div className="text-sm font-bold text-purple-400 mb-3">Individual Legs ({totalLegs}):</div>
+                                <div className="max-h-40 overflow-y-auto space-y-2">
+                                    {legVolumes.map((volume, index) => {
+                                        const isStrongest = volume === strongestLeg;
+                                        return (
+                                            <div
+                                                key={index}
+                                                className={`flex items-center justify-between p-3 rounded-lg ${
+                                                    isStrongest
+                                                        ? 'bg-gold-primary/20 border border-gold-primary/40'
+                                                        : 'bg-black/30 border border-gray-700/30'
+                                                }`}
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm font-mono text-gray-400">Leg {index + 1}</span>
+                                                    {isStrongest && <span className="text-xs">👑</span>}
+                                                </div>
+                                                <span className={`font-bold ${isStrongest ? 'text-gold-primary' : 'text-white'}`}>
+                                                    ${formatUSDT(volume, 0)}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Info Note */}
+                        <div className="mt-4 p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+                            <p className="text-xs text-purple-300 text-center">
+                                <span className="font-bold">💡 Matching Rule:</span> Both Leg A and Leg B must reach 50% of the target business volume to claim rewards!
+                            </p>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Withdrawal Modal */}

@@ -86,7 +86,7 @@ export default function TeamTab({ userId }: TeamTabProps) {
                 <div className="grid grid-cols-2 gap-4">
                     <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
                         <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-400">Qualifying Directs ($20+)</span>
+                            <span className="text-sm text-gray-400">Qualifying Directs ($100+)</span>
                             <span className="text-lg font-bold text-yellow-400">{Number(team.qualifyingDirectCount)}</span>
                         </div>
                     </div>
