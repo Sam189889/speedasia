@@ -159,9 +159,16 @@ function UserRow({ index, onSelect }: { index: number; onSelect: (address: strin
 
     if (!userAddress) return null;
 
+    const handleViewUser = () => {
+        if (userId) {
+            const decodedId = decodeUserId(userId);
+            window.open(`/lookup?user=${decodedId}`, '_blank');
+        }
+    };
+
     return (
         <div
-            onClick={() => onSelect(userAddress)}
+            onClick={handleViewUser}
             className="flex items-center justify-between p-3 bg-black/50 border border-gold-primary/20 rounded-lg hover:border-gold-primary/40 transition-all cursor-pointer"
         >
             <div className="flex items-center gap-3">
@@ -177,7 +184,7 @@ function UserRow({ index, onSelect }: { index: number; onSelect: (address: strin
                     )}
                 </div>
             </div>
-            <span className="text-gold-primary font-bold text-sm">View →</span>
+            <span className="text-gold-primary font-bold text-sm">View 🔗</span>
         </div>
     );
 }
@@ -206,9 +213,16 @@ function UserSearchResult({ address, onSelect }: { address: string; onSelect: (a
         );
     }
 
+    const handleViewUser = () => {
+        if (userId) {
+            const decodedId = decodeUserId(userId);
+            window.open(`/lookup?user=${decodedId}`, '_blank');
+        }
+    };
+
     return (
         <div
-            onClick={() => onSelect(address)}
+            onClick={handleViewUser}
             className="flex justify-between items-center p-3 bg-black/50 rounded-lg border border-green-500/30 hover:border-green-500 cursor-pointer transition-all"
         >
             <div className="flex items-center gap-3">
