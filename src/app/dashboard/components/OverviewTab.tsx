@@ -116,8 +116,32 @@ export default function OverviewTab({ userId, onCreateStake, onWithdraw }: Overv
         toast.success('Referral link copied! 🔗');
     };
 
+    const isActiveUser = Number(dashboard.stakingStats?.activeStakesCount || 0) > 0;
+
     return (
         <div className="space-y-6">
+            {/* User Status Banner */}
+            <div className={`p-4 rounded-lg border-2 flex items-center justify-between ${isActiveUser ? 'bg-green-500/10 border-green-500/30' : 'bg-red-500/10 border-red-500/30'}`}>
+                <div className="flex items-center gap-3">
+                    <div className={`w-3 h-3 rounded-full ${isActiveUser ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`}></div>
+                    <span className={`font-bold ${isActiveUser ? 'text-green-400' : 'text-red-400'}`}>
+                        {isActiveUser ? 'Active' : 'Inactive'}
+                    </span>
+                    <span className="text-gray-400 text-sm">
+                        ({Number(dashboard.stakingStats?.activeStakesCount || 0)} active stake{Number(dashboard.stakingStats?.activeStakesCount || 0) !== 1 ? 's' : ''})
+                    </span>
+                </div>
+                {!isActiveUser && (
+                    <button
+                        onClick={onCreateStake}
+                        className="px-4 py-1.5 rounded-lg font-bold text-black text-sm transition-all hover:scale-105"
+                        style={{ background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)' }}
+                    >
+                        Stake Now
+                    </button>
+                )}
+            </div>
+
             {/* Stats Grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                 {stats.map((stat, index) => (

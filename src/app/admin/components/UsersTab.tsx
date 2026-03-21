@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useReadContract } from 'wagmi';
 import { useTotalUsersCount, useUserByIndex } from '@/hooks/admin/useAdminData';
 import { useUserValidation } from '@/hooks/user/useUserValidation';
 import { useUserDashboard } from '@/hooks/user/useUserDashboard';
 import { useUserIdByAddress } from '@/hooks/user/useUserData';
+import { useSpeed } from '@/hooks/contracts/useSpeed';
 import { decodeUserId, formatUSDT } from '@/hooks/common/formatters';
 
 export default function UsersTab() {
@@ -145,6 +147,13 @@ export default function UsersTab() {
 function UserRow({ index, onSelect }: { index: number; onSelect: (address: string) => void }) {
     const { userAddress, isLoading } = useUserByIndex(index);
     const { userId, isLoading: userIdLoading } = useUserIdByAddress(userAddress ?? undefined);
+    const contract = useSpeed();
+    const { data: isActive } = useReadContract({
+        ...contract,
+        functionName: 'isUserActiveNow',
+        args: userAddress ? [userAddress] : undefined,
+        query: { enabled: !!userAddress },
+    });
 
     if (isLoading) {
         return (
@@ -184,7 +193,12 @@ function UserRow({ index, onSelect }: { index: number; onSelect: (address: strin
                     )}
                 </div>
             </div>
-            <span className="text-gold-primary font-bold text-sm">View 🔗</span>
+            <div className="flex items-center gap-2">
+                <span className={`px-2 py-0.5 rounded text-xs font-bold ${isActive ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                    {isActive ? '● Active' : '○ Inactive'}
+                </span>
+                <span className="text-gold-primary font-bold text-sm">View 🔗</span>
+            </div>
         </div>
     );
 }
