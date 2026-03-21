@@ -69,7 +69,7 @@ export default function EarningsTab({ userId }: EarningsTabProps) {
         return percentage;
     };
 
-    // Earnings breakdown data (V2: No Direct Income)
+    // Earnings breakdown data
     const earningsData = [
         {
             type: 'Staking Income',
@@ -77,6 +77,13 @@ export default function EarningsTab({ userId }: EarningsTabProps) {
             percentage: getPercentage(incomes.stakingIncome),
             icon: '💎',
             color: 'from-blue-500 to-blue-600'
+        },
+        {
+            type: 'Direct Income',
+            amount: incomes.directIncome,
+            percentage: getPercentage(incomes.directIncome),
+            icon: '🤝',
+            color: 'from-green-500 to-green-600'
         },
         {
             type: 'Level Income',

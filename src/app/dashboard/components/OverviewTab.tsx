@@ -186,12 +186,16 @@ export default function OverviewTab({ userId, onCreateStake, onWithdraw }: Overv
 
                 {/* Right Column - Income & Referral */}
                 <div className="space-y-6">
-                    {/* Income Breakdown (V2: No Direct Income) */}
+                    {/* Income Breakdown */}
                     <div className="card-gold p-6 border-4 border-gold-primary/40">
                         <h3 className="text-lg font-black text-gold-primary mb-4 uppercase">Income Breakdown</h3>
                         <div className="space-y-3">
                             <div className="flex justify-between items-center p-3 bg-black/50 rounded-lg border border-gold-primary/20">
-                                <span className="text-gray-400">� Staking Income</span>
+                                <span className="text-gray-400">🤝 Direct Income</span>
+                                <span className="text-white font-bold">${formatUSDT(dashboard.incomes?.directIncome || BigInt(0))}</span>
+                            </div>
+                            <div className="flex justify-between items-center p-3 bg-black/50 rounded-lg border border-gold-primary/20">
+                                <span className="text-gray-400">💎 Staking Income</span>
                                 <span className="text-white font-bold">${formatUSDT(dashboard.incomes?.stakingIncome || BigInt(0))}</span>
                             </div>
                             <div className="flex justify-between items-center p-3 bg-black/50 rounded-lg border border-gold-primary/20">
