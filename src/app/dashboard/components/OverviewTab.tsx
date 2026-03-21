@@ -94,6 +94,7 @@ export default function OverviewTab({ userId, onCreateStake, onWithdraw }: Overv
         isActive: stake.isActive,
         isMigrated: stake.isMigrated || false,
         duration: stake.duration,
+        startTime: stake.startTime,
         lastRoiClaimTime: stake.lastRoiClaimTime || BigInt(0),
         totalRoiEarned: stake.totalRoiEarned || BigInt(0),
         boostedRoiPercent: stake.boostedRoiPercent || BigInt(0),

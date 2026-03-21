@@ -163,6 +163,14 @@ export default function EarningsTab({ userId }: EarningsTabProps) {
 
     const availableBalance = Number(formatUSDT(incomes.availableBalance).replace(/,/g, ''));
 
+    const withdrawalAmountWei = withdrawAmount ? usdtToWei(withdrawAmount) : BigInt(0);
+    const withdrawalFeeWei = withdrawalAmountWei > BigInt(0)
+        ? (withdrawalAmountWei * BigInt(500)) / BigInt(10000)
+        : BigInt(0);
+    const withdrawalNetWei = withdrawalAmountWei > BigInt(0)
+        ? withdrawalAmountWei - withdrawalFeeWei
+        : BigInt(0);
+
     // Lifetime reward tier names
     const tierNames = ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond', 'Crown'];
     const tierEmojis = ['🥉', '🥈', '🥇', '💎', '👑', '🏆'];
@@ -484,6 +492,21 @@ export default function EarningsTab({ userId }: EarningsTabProps) {
                                 className="w-full px-4 py-3 bg-black/50 border-2 border-gold-primary/30 rounded-lg text-white text-lg focus:border-gold-primary focus:outline-none"
                                 max={availableBalance}
                             />
+                        </div>
+
+                        <div className="p-4 bg-black/50 border border-gold-primary/20 rounded-lg mb-4 space-y-2">
+                            <div className="flex justify-between text-sm">
+                                <span className="text-gray-400">Requested</span>
+                                <span className="text-white font-bold">${withdrawAmount ? formatUSDT(withdrawalAmountWei) : '0.00'}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-gray-400">Withdrawal Fee (5%)</span>
+                                <span className="text-red-400 font-bold">-${withdrawAmount ? formatUSDT(withdrawalFeeWei) : '0.00'}</span>
+                            </div>
+                            <div className="border-t border-white/10 pt-2 flex justify-between text-sm">
+                                <span className="text-gold-primary font-bold">Net to Wallet</span>
+                                <span className="text-gold-primary font-black">${withdrawAmount ? formatUSDT(withdrawalNetWei) : '0.00'}</span>
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-4 gap-2 mb-4">

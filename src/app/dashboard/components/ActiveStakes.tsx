@@ -17,6 +17,7 @@ interface V2StakeData {
     isActive: boolean;
     isMigrated: boolean;
     duration: bigint;
+    startTime: bigint;
     lastRoiClaimTime: bigint;
     totalRoiEarned: bigint;
     boostedRoiPercent: bigint;
@@ -44,6 +45,36 @@ function calculatePendingRoi(stake: V2StakeData): bigint {
     
     const roiPercent = stake.boostedRoiPercent > BigInt(0) ? stake.boostedRoiPercent : BigInt(100); // 100 = 1%, 150 = 1.5%
     return (stake.amount * roiPercent * daysPassed) / BigInt(10000);
+}
+
+// Helper: Calculate unstake penalty details using contract logic
+function getUnstakePenaltyDetails(stake: V2StakeData) {
+    const now = Math.floor(Date.now() / 1000);
+    const stakeStartTime = Number(stake.startTime || BigInt(0));
+    const stakeAge = Math.max(0, now - stakeStartTime);
+
+    let penaltyPercent = 0;
+    if (stakeAge < 30 * 24 * 60 * 60) {
+        penaltyPercent = 3000; // 30%
+    } else if (stakeAge < 60 * 24 * 60 * 60) {
+        penaltyPercent = 2000; // 20%
+    } else if (stakeAge < 90 * 24 * 60 * 60) {
+        penaltyPercent = 1000; // 10%
+    }
+
+    const penalty = (stake.amount * BigInt(penaltyPercent)) / BigInt(10000);
+    const capitalAfterPenalty = stake.amount - penalty;
+    const daysAge = Math.floor(stakeAge / 86400);
+    const daysUntilNoPenalty = penaltyPercent === 0 ? 0 : Math.max(0, Math.ceil((90 * 24 * 60 * 60 - stakeAge) / 86400));
+
+    return {
+        stakeAge,
+        daysAge,
+        penaltyPercent,
+        penalty,
+        capitalAfterPenalty,
+        daysUntilNoPenalty,
+    };
 }
 
 // Helper: Format time ago
@@ -179,14 +210,12 @@ function UnstakeModal({
 
     const pendingRoi = calculatePendingRoi(stake);
     const totalReturn = stake.amount + pendingRoi;
+    const penaltyDetails = getUnstakePenaltyDetails(stake);
+    const hasPenalty = penaltyDetails.penaltyPercent > 0;
 
     const handleUnstake = async () => {
         if (!hasEnoughGas()) {
             toast.error('Insufficient BNB for gas fees!');
-            return;
-        }
-
-        if (!confirm('⚠️ This will close your stake permanently. Continue?')) {
             return;
         }
 
@@ -210,13 +239,30 @@ function UnstakeModal({
                 </div>
 
                 {/* Warning */}
-                <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg mb-4">
-                    <div className="text-red-400 text-sm font-bold mb-2">⚠️ Important:</div>
-                    <ul className="text-xs text-gray-400 space-y-1">
-                        <li>• Your stake will be closed permanently</li>
-                        <li>• All pending ROI will be claimed first</li>
-                        <li>• Funds will be added to Available Balance</li>
-                    </ul>
+                <div className={`p-4 rounded-lg mb-4 border ${hasPenalty ? 'bg-red-500/10 border-red-500/30' : 'bg-green-500/10 border-green-500/30'}`}>
+                    <div className={`text-sm font-bold mb-2 ${hasPenalty ? 'text-red-400' : 'text-green-400'}`}>
+                        {hasPenalty ? '⚠️ Penalty applies on this unstake:' : '✅ No penalty applies:'}
+                    </div>
+                    <div className="text-xs text-gray-400 space-y-2">
+                        <p>• Your stake will be closed permanently</p>
+                        <p>• All pending ROI will be claimed first</p>
+                        <p>• Funds will be added to Available Balance</p>
+                        {hasPenalty ? (
+                            <>
+                                <p className="text-red-400 font-bold">
+                                    • Principal cut: ${formatUSDT(penaltyDetails.penalty)} ({penaltyDetails.penaltyPercent / 100}% penalty)
+                                </p>
+                                <p>
+                                    • You will receive: ${formatUSDT(penaltyDetails.capitalAfterPenalty)}
+                                </p>
+                                <p>
+                                    • No penalty after: {penaltyDetails.daysUntilNoPenalty} days
+                                </p>
+                            </>
+                        ) : (
+                            <p className="text-green-400 font-bold">• No principal penalty on this unstake</p>
+                        )}
+                    </div>
                 </div>
 
                 {/* Payout Summary */}
@@ -226,6 +272,10 @@ function UnstakeModal({
                     <div className="text-xs text-gray-500 mt-2">
                         Capital: ${formatUSDT(stake.amount)} + Pending ROI: ${formatUSDT(pendingRoi)}
                     </div>
+                </div>
+
+                <div className="p-3 bg-black/50 rounded-lg border border-white/10 mb-4 text-xs text-gray-400">
+                    Stake age: {penaltyDetails.daysAge} day{penaltyDetails.daysAge === 1 ? '' : 's'}
                 </div>
 
                 {/* Gas Info */}
@@ -249,7 +299,7 @@ function UnstakeModal({
                             background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)'
                         }}
                     >
-                        {isPending ? 'Processing...' : 'Unstake'}
+                        {isPending ? 'Processing...' : hasPenalty ? 'Unstake with Penalty' : 'Unstake'}
                     </button>
                 </div>
             </div>
