@@ -466,34 +466,86 @@ export default function ActiveStakesV2({ stakes, userId, onCreateStake, onRefres
                                     </div>
                                 </div>
 
-                                {/* Speed Progress (only for current stake that can get Speed bonus) */}
-                                {boosterData && boosterData[5] && Number(boosterData[4]) === stake.stakeIndex && !isBoosted && (
-                                    <div className="mb-4 p-3 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-lg">
-                                        <div className="flex justify-between items-center mb-2">
-                                            <span className="text-xs font-bold text-purple-400">🎯 Speed Progress</span>
-                                            <span className="text-xs font-black text-pink-400">
-                                                {formatCountdown(Number(boosterData[6]))}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <div className="flex-1 bg-black/50 rounded-full h-2">
-                                                <div 
-                                                    className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all"
-                                                    style={{ width: `${(Number(boosterData[2]) / 2) * 100}%` }}
-                                                />
+                                {/* Speed Boost Timeline */}
+                                {boosterData && Number(boosterData[4]) === stake.stakeIndex && !isBoosted && (() => {
+                                    const windowStart = Number(boosterData[0]);
+                                    const windowEnd = Number(boosterData[1]);
+                                    const qualifyingCount = Number(boosterData[2]);
+                                    const minAmount = boosterData[3];
+                                    const isWindowActive = boosterData[5] as boolean;
+                                    const timeRemaining = Number(boosterData[6]);
+                                    const totalWindow = windowEnd - windowStart;
+                                    const elapsed = totalWindow - timeRemaining;
+                                    const timeProgress = totalWindow > 0 ? Math.min((elapsed / totalWindow) * 100, 100) : 0;
+
+                                    if (windowStart === 0) return null;
+
+                                    if (isWindowActive) {
+                                        return (
+                                            <div className="mb-4 p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-lg">
+                                                <div className="flex justify-between items-center mb-3">
+                                                    <span className="text-sm font-black text-purple-400 uppercase">🚀 Speed Boost Window</span>
+                                                    <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs font-bold rounded animate-pulse">ACTIVE</span>
+                                                </div>
+
+                                                {/* Time Progress */}
+                                                <div className="mb-3">
+                                                    <div className="flex justify-between text-xs mb-1">
+                                                        <span className="text-gray-400">⏱ Time Remaining</span>
+                                                        <span className="text-pink-400 font-black">{formatCountdown(timeRemaining)}</span>
+                                                    </div>
+                                                    <div className="w-full bg-black/50 rounded-full h-2.5">
+                                                        <div 
+                                                            className="bg-gradient-to-r from-green-500 to-yellow-500 h-2.5 rounded-full transition-all"
+                                                            style={{ width: `${100 - timeProgress}%` }}
+                                                        />
+                                                    </div>
+                                                    <div className="flex justify-between text-[10px] text-gray-500 mt-1">
+                                                        <span>Started: {new Date(windowStart * 1000).toLocaleDateString()}</span>
+                                                        <span>Ends: {new Date(windowEnd * 1000).toLocaleDateString()}</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Referral Progress */}
+                                                <div className="mb-3">
+                                                    <div className="flex justify-between text-xs mb-1">
+                                                        <span className="text-gray-400">👥 Qualifying Referrals</span>
+                                                        <span className="text-purple-400 font-bold">{qualifyingCount}/2</span>
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        {[0, 1].map((i) => (
+                                                            <div key={i} className={`flex-1 h-2.5 rounded-full ${i < qualifyingCount ? 'bg-gradient-to-r from-purple-500 to-pink-500' : 'bg-black/50'}`} />
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                {/* Requirements */}
+                                                <div className="p-2 bg-black/30 rounded-lg border border-white/5">
+                                                    <p className="text-xs text-gray-400">
+                                                        📋 Bring <span className="text-purple-400 font-bold">2 referrals</span> with min <span className="text-gold-primary font-bold">${formatUSDT(minAmount)}</span> stake within the window to boost your daily ROI from <span className="text-white font-bold">1%</span> → <span className="text-green-400 font-bold">1.5%</span>
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <span className="text-xs font-bold text-white">{Number(boosterData[2])}/2</span>
+                                        );
+                                    }
+
+                                    // Window expired
+                                    return (
+                                        <div className="mb-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="text-sm font-black text-red-400 uppercase">🚀 Speed Boost Window</span>
+                                                <span className="px-2 py-0.5 bg-red-500/20 text-red-400 text-xs font-bold rounded">EXPIRED</span>
+                                            </div>
+                                            <div className="flex justify-between text-[10px] text-gray-500 mb-2">
+                                                <span>Started: {new Date(windowStart * 1000).toLocaleDateString()}</span>
+                                                <span>Ended: {new Date(windowEnd * 1000).toLocaleDateString()}</span>
+                                            </div>
+                                            <p className="text-xs text-gray-500">
+                                                You needed {2 - qualifyingCount} more qualifying referral{2 - qualifyingCount !== 1 ? 's' : ''} (${formatUSDT(minAmount)}+). Create a new stake to get a fresh window.
+                                            </p>
                                         </div>
-                                        <p className="text-xs text-gray-400 break-words">
-                                            Bring 2 referrals (${formatUSDT(boosterData[3])}+) to boost ROI to 1.5%!
-                                        </p>
-                                    </div>
-                                )}
-                                {boosterData && !boosterData[5] && Number(boosterData[4]) === stake.stakeIndex && !isBoosted && (
-                                    <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
-                                        <p className="text-xs text-red-400 font-bold">⏰ Speed window expired</p>
-                                    </div>
-                                )}
+                                    );
+                                })()}
 
                                 {/* Stats Grid - Principal & ROI Separate */}
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
