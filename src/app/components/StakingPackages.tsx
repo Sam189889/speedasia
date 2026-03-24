@@ -64,7 +64,7 @@ export default function StakingPackages() {
         {/* Progressive Staking Info */}
         <div className="max-w-3xl mx-auto card-gold p-6 border-2 border-purple-500/30 bg-gradient-to-r from-purple-500/10 to-transparent mb-8">
           <div className="flex items-center gap-4">
-            <div className="text-4xl">�</div>
+            <div className="text-4xl">📊</div>
             <div>
               <h4 className="text-purple-400 font-bold mb-1">Progressive Staking</h4>
               <p className="text-gray-300 text-sm">
