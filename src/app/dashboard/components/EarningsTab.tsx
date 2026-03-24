@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useUserDashboard } from '@/hooks/user/useUserDashboard';
-import { useLifetimeRewardProgress, useAllLevelsSummary } from '@/hooks/user/useUserData';
+import { useLifetimeRewardProgress, useAllLevelsSummary, useLevelUsers } from '@/hooks/user/useUserData';
 import { useUserTransactions } from '@/hooks/user/useUserTransactions';
 import { useUserBalances } from '@/hooks/user/useUserBalances';
 import { useLegsBreakdown } from '@/hooks/user/useLegsBreakdown';
@@ -19,11 +19,27 @@ export default function EarningsTab({ userId }: EarningsTabProps) {
 
     const { dashboard, isLoading } = useUserDashboard(userId);
     const { levelCounts, levelBusiness } = useAllLevelsSummary(userId);
-    const { strongestLeg, otherLegsSum, legVolumes, totalLegs, isLoading: legsLoading } = useLegsBreakdown(userId);
+    const { legVolumes, isLoading: legsLoading } = useLegsBreakdown(userId);
+    const { staked: level1Stakes } = useLevelUsers(userId, 1);
 
     // Calculate totals from levels (same as TeamTab) - only if we have level data
     const totalLevelUsers = levelCounts.length > 0 ? levelCounts.reduce((sum, count) => sum + Number(count), 0) : 0;
     const totalLevelBusiness = levelBusiness.length > 0 ? levelBusiness.reduce((sum, biz) => sum + biz, BigInt(0)) : BigInt(0);
+
+    // Adjusted leg volumes: add each direct's own stake to their sub-team volume
+    // contract _getTeamStats(direct) counts only children, not the direct themselves
+    const adjustedLegVolumes = legVolumes.map((vol, i) => vol + (level1Stakes[i] ?? BigInt(0)));
+    let adjustedStrongestLeg = BigInt(0);
+    let adjustedOtherLegsSum = BigInt(0);
+    adjustedLegVolumes.forEach(vol => {
+        if (vol > adjustedStrongestLeg) {
+            adjustedOtherLegsSum += adjustedStrongestLeg;
+            adjustedStrongestLeg = vol;
+        } else {
+            adjustedOtherLegsSum += vol;
+        }
+    });
+    const totalLegs = adjustedLegVolumes.length;
 
     const {
         teamSizeRequired,
@@ -284,22 +300,20 @@ export default function EarningsTab({ userId }: EarningsTabProps) {
                         const directReq = Number(directsRequired[index] || 0);
                         const businessReq = businessRequired[index] || BigInt(0);
 
-                        // Calculate progress - using qualifyingDirectCount for $20+ referrals
+                        // Calculate progress
                         const currentTeam = totalLevelUsers || Number(team.teamSize);
-                        const currentBusiness = totalLevelBusiness || team.teamBusinessVolume;
                         const teamProgress = Math.min(100, (currentTeam / teamReq) * 100 || 0);
                         const directProgress = Math.min(100, (Number(team.qualifyingDirectCount) / directReq) * 100 || 0);
-                        
-                        // Fix BigInt percentage: Convert to dollars first (divide by 1e18), then calculate percentage
-                        let businessProgress = 0;
-                        if (businessReq > BigInt(0) && currentBusiness > BigInt(0)) {
-                            // Convert from wei to dollars first
-                            const currentDollars = Number(currentBusiness / BigInt(1e18));
-                            const requiredDollars = Number(businessReq / BigInt(1e18));
-                            businessProgress = Math.min(100, (currentDollars / requiredDollars) * 100);
-                        }
-                        
-                        const overallProgress = Math.min(100, (teamProgress + directProgress + businessProgress) / 3);
+
+                        // 50-50 leg matching: both legs must reach halfTarget = businessReq / 2
+                        const halfTarget = businessReq / BigInt(2);
+                        const legADollars = Number(adjustedStrongestLeg / BigInt(1e18));
+                        const legBDollars = Number(adjustedOtherLegsSum / BigInt(1e18));
+                        const halfTargetDollars = Number(halfTarget / BigInt(1e18));
+                        const legAProgress = halfTargetDollars > 0 ? Math.min(100, (legADollars / halfTargetDollars) * 100) : 0;
+                        const legBProgress = halfTargetDollars > 0 ? Math.min(100, (legBDollars / halfTargetDollars) * 100) : 0;
+                        const legAMet = adjustedStrongestLeg >= halfTarget;
+                        const legBMet = adjustedOtherLegsSum >= halfTarget;
 
                         return (
                             <div
@@ -362,24 +376,32 @@ export default function EarningsTab({ userId }: EarningsTabProps) {
                                             <div className="h-full bg-purple-500 transition-all" style={{ width: `${directProgress}%` }}></div>
                                         </div>
 
-                                        {/* Business */}
+                                        {/* Leg A Matching */}
                                         <div className="flex items-center justify-between text-xs">
-                                            <span className="text-gray-400">Team Business</span>
-                                            <span className={currentBusiness >= businessReq ? 'text-green-400' : 'text-gray-500'}>
-                                                ${formatUSDT(currentBusiness, 0)} / ${formatUSDT(businessReq, 0)}
+                                            <span className="text-gray-400">🏆 Leg A (Strongest)</span>
+                                            <span className={legAMet ? 'text-green-400' : 'text-gray-500'}>
+                                                ${formatUSDT(adjustedStrongestLeg, 0)} / ${formatUSDT(halfTarget, 0)}
+                                                {legAMet && ' ✓'}
                                             </span>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
-                                                <div 
-                                                    className="h-full transition-all rounded-full" 
-                                                    style={{ 
-                                                        width: `${businessProgress > 0 && businessProgress < 2 ? 2 : businessProgress}%`,
-                                                        background: 'linear-gradient(90deg, #FFD700 0%, #FFA500 100%)'
-                                                    }}
-                                                ></div>
-                                            </div>
-                                            <span className="text-xs font-bold text-yellow-400">{businessProgress.toFixed(1)}%</span>
+                                        <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                            <div className="h-full transition-all rounded-full"
+                                                style={{ width: `${legAProgress > 0 && legAProgress < 2 ? 2 : legAProgress}%`, background: 'linear-gradient(90deg, #FFD700 0%, #FFA500 100%)' }}
+                                            ></div>
+                                        </div>
+
+                                        {/* Leg B Matching */}
+                                        <div className="flex items-center justify-between text-xs">
+                                            <span className="text-gray-400">👥 Leg B (Others)</span>
+                                            <span className={legBMet ? 'text-green-400' : 'text-gray-500'}>
+                                                ${formatUSDT(adjustedOtherLegsSum, 0)} / ${formatUSDT(halfTarget, 0)}
+                                                {legBMet && ' ✓'}
+                                            </span>
+                                        </div>
+                                        <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                            <div className="h-full transition-all rounded-full"
+                                                style={{ width: `${legBProgress > 0 && legBProgress < 2 ? 2 : legBProgress}%`, background: 'linear-gradient(90deg, #3B82F6 0%, #1D4ED8 100%)' }}
+                                            ></div>
                                         </div>
                                     </div>
                                 )}
@@ -407,11 +429,11 @@ export default function EarningsTab({ userId }: EarningsTabProps) {
                                     <div>
                                         <div className="text-xs text-gray-400 uppercase">Strongest Leg (A)</div>
                                         <div className="text-2xl font-black text-gold-primary">
-                                            ${formatUSDT(strongestLeg, 0)}
+                                            ${formatUSDT(adjustedStrongestLeg, 0)}
                                         </div>
                                     </div>
                                 </div>
-                                <div className="text-xs text-gray-500">Your highest performing direct's team volume</div>
+                                <div className="text-xs text-gray-500">Highest performing direct + their full team</div>
                             </div>
 
                             {/* Other Legs Sum */}
@@ -423,21 +445,21 @@ export default function EarningsTab({ userId }: EarningsTabProps) {
                                     <div>
                                         <div className="text-xs text-gray-400 uppercase">Other Legs (B)</div>
                                         <div className="text-2xl font-black text-blue-400">
-                                            ${formatUSDT(otherLegsSum, 0)}
+                                            ${formatUSDT(adjustedOtherLegsSum, 0)}
                                         </div>
                                     </div>
                                 </div>
-                                <div className="text-xs text-gray-500">Combined volume of all other directs</div>
+                                <div className="text-xs text-gray-500">Combined volume of all other directs + their teams</div>
                             </div>
                         </div>
 
                         {/* Individual Legs */}
-                        {legVolumes.length > 0 && (
+                        {adjustedLegVolumes.length > 0 && (
                             <div className="space-y-2">
                                 <div className="text-sm font-bold text-purple-400 mb-3">Individual Legs ({totalLegs}):</div>
                                 <div className="max-h-40 overflow-y-auto space-y-2">
-                                    {legVolumes.map((volume, index) => {
-                                        const isStrongest = volume === strongestLeg;
+                                    {adjustedLegVolumes.map((volume, index) => {
+                                        const isStrongest = volume === adjustedStrongestLeg;
                                         return (
                                             <div
                                                 key={index}

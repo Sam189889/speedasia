@@ -151,7 +151,7 @@ export default function TeamTab({ userId }: TeamTabProps) {
                 {/* Level Unlock Info */}
                 <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
                     <p className="text-xs sm:text-sm text-blue-300 text-center">
-                        <span className="font-bold">Unlock levels:</span> Each $20+ referral = 1 level, OR $2000 business = all 20!
+                        <span className="font-bold">Unlock levels:</span> Each $100+ referral = 1 level!
                     </p>
                 </div>
             </div>
