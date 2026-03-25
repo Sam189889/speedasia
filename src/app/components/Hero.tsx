@@ -116,7 +116,7 @@ export default function Hero() {
             📊 View Staking Plans
           </a>
 
-          <a href="/lookup" className="group px-10 py-5 font-black text-lg uppercase tracking-wider rounded-xl border-4 border-blue-500 bg-transparent text-blue-400 hover:bg-blue-500/20 transition-all duration-300 hover:scale-110 hover:-translate-y-2" style={{
+          <a href="/lookup" target="_blank" rel="noopener noreferrer" className="group px-10 py-5 font-black text-lg uppercase tracking-wider rounded-xl border-4 border-blue-500 bg-transparent text-blue-400 hover:bg-blue-500/20 transition-all duration-300 hover:scale-110 hover:-translate-y-2" style={{
             boxShadow: '0 10px 30px rgba(59, 130, 246, 0.3)'
           }}>
             🔍 Lookup Account

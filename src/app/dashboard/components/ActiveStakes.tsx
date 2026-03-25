@@ -30,8 +30,9 @@ interface ActiveStakesV2Props {
     onRefresh: () => void;
 }
 
-// Helper: Calculate pending ROI days (simplified - using current time)
+// Helper: Calculate pending ROI days (matches contract getCompletedRoiDays)
 function calculatePendingDays(lastClaimTime: bigint): number {
+    if (lastClaimTime === BigInt(0)) return 0;
     const now = Math.floor(Date.now() / 1000);
     const lastClaim = Number(lastClaimTime);
     const daysPassed = Math.floor((now - lastClaim) / 86400);

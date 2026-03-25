@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useReadContract } from 'wagmi';
 import { useTotalUsersCount, useUserByIndex } from '@/hooks/admin/useAdminData';
-import { useUserValidation } from '@/hooks/user/useUserValidation';
+import { useUserValidation, useReferrerValidation } from '@/hooks/user/useUserValidation';
 import { useUserDashboard } from '@/hooks/user/useUserDashboard';
 import { useUserIdByAddress } from '@/hooks/user/useUserData';
 import { useSpeed } from '@/hooks/contracts/useSpeed';
@@ -71,13 +71,18 @@ export default function UsersTab() {
                         type="text"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        placeholder="Enter wallet address (0x...)"
+                        placeholder="Enter User ID (e.g. 7JFDG) or wallet address (0x...)"
                         className="w-full bg-transparent text-white placeholder-gray-500 focus:outline-none font-mono"
                     />
                 </div>
                 {searchTerm.startsWith('0x') && searchTerm.length >= 10 && (
                     <div className="mt-4">
                         <UserSearchResult address={searchTerm} onSelect={setSelectedUser} />
+                    </div>
+                )}
+                {!searchTerm.startsWith('0x') && searchTerm.trim().length >= 1 && searchTerm.trim().length <= 5 && (
+                    <div className="mt-4">
+                        <UserIdSearchResult userId={searchTerm.trim().toUpperCase()} />
                     </div>
                 )}
             </div>
@@ -244,6 +249,44 @@ function UserSearchResult({ address, onSelect }: { address: string; onSelect: (a
                 <span className="font-mono text-white text-sm">{address.slice(0, 12)}...{address.slice(-6)}</span>
             </div>
             <span className="text-gold-primary font-bold">ID: {userId ? decodeUserId(userId) : '-'}</span>
+        </div>
+    );
+}
+
+// Search by UserId (e.g. "7JFDG")
+function UserIdSearchResult({ userId }: { userId: string }) {
+    const { referrerAddress, isValidReferrer, isLoading } = useReferrerValidation(userId);
+
+    if (isLoading) {
+        return (
+            <div className="flex justify-between items-center p-3 bg-black/50 rounded-lg border border-blue-500/30">
+                <div className="flex items-center gap-3">
+                    <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-gray-400">Searching for {userId}...</span>
+                </div>
+            </div>
+        );
+    }
+
+    if (!isValidReferrer || !referrerAddress) {
+        return (
+            <div className="flex justify-between items-center p-3 bg-black/50 rounded-lg border border-red-500/30">
+                <span className="text-gray-400">❌ User ID &quot;{userId}&quot; not found</span>
+                <span className="text-red-400 font-bold text-sm">Not registered</span>
+            </div>
+        );
+    }
+
+    return (
+        <div
+            onClick={() => window.open(`/lookup?user=${userId}`, '_blank')}
+            className="flex justify-between items-center p-3 bg-black/50 rounded-lg border border-green-500/30 hover:border-green-500 cursor-pointer transition-all"
+        >
+            <div className="flex items-center gap-3">
+                <span className="text-green-400">✓ Found</span>
+                <span className="font-mono text-white text-sm">{referrerAddress.slice(0, 12)}...{referrerAddress.slice(-6)}</span>
+            </div>
+            <span className="text-gold-primary font-bold">ID: {userId} 🔗</span>
         </div>
     );
 }
